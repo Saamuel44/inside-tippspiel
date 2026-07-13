@@ -1,0 +1,8 @@
+# Original-Backups (unkomprimiert, wird von der Webseite nicht geladen,
+# ca. 21 MB – kein Grund, das mit hochzuladen)
+assets/original/
+
+# Betriebssystem-Dateien
+.DS_Store
+Thumbs.db
+desktop.ini

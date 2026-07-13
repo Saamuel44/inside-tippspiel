@@ -1,0 +1,56 @@
+// =====================================================================
+// FIRESTORE-SICHERHEITSREGELN – INSIDE1911 Tippspiel
+// -----------------------------------------------------------------------
+// Diesen kompletten Inhalt in der Firebase-Konsole unter
+// Firestore Database → Regeln (Tab "Rules") einfügen und "Veröffentlichen"
+// klicken. Siehe FIREBASE-SETUP.md für den genauen Weg dorthin.
+//
+// Was diese Regeln bewirken:
+// - Jeder darf die Tabelle/Tipps LESEN (nötig für die Rangliste).
+// - Neue User dürfen sich selbst registrieren (aber nie als Admin).
+// - Normale User dürfen NUR ihre eigenen Tipps/Torschützen/Bonus-Antworten
+//   ändern – nie ihren Namen, ihre Plattform oder den PIN einer anderen
+//   Person. Einen einmal gesetzten PIN können nur DU (Admin) oder der
+//   Erstbezug (PIN war noch leer) ändern.
+// - Ergebnisse, Torschützenkönig und Bonus-Lösungen darf NUR der Admin
+//   eintragen – erkannt an der echten Firebase-Anmeldung mit deiner
+//   E-Mail-Adresse (kein Passwort/PIN steht dafür im Quellcode).
+// =====================================================================
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function istAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'inside1911@gmx.at';
+    }
+
+    match /nutzer/{userId} {
+      allow read: if true;
+
+      // Registrierung: jeder darf sich selbst anlegen, aber nie als Admin
+      allow create: if istAdmin() || request.resource.data.istAdmin == false;
+
+      allow update: if istAdmin()
+        || (
+          resource.data.istAdmin == false &&
+          (
+            // normaler Tipp-/Torschützen-/Bonus-Tipp
+            request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['tipps', 'torschuetze', 'bonus'])
+            ||
+            // PIN erstmalig selbst setzen (nach Reset durch Admin)
+            (resource.data.pin == null &&
+             request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pin']))
+          )
+        );
+
+      allow delete: if istAdmin();
+    }
+
+    match /zustand/{dokument} {
+      allow read: if true;
+      allow write: if istAdmin();
+    }
+  }
+}

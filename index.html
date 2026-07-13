@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>INSIDE1911 Tippspiel – Austria Wien</title>
+  <meta name="description" content="Das Tippspiel von INSIDE1911 für Austria-Wien-Mitglieder. Tippe die Spiele, sammle Punkte und gewinne tolle Preise!">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏆</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cutive&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="assets/streifen.png">
+  <link rel="preload" as="image" href="assets/logo.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="intro">
+
+  <!-- ============================================================
+       HERO mit Eröffnungs-Animation
+       ============================================================ -->
+  <header id="hero">
+    <div class="streifen-feld" aria-hidden="true">
+      <div class="streifen-ebene ebene-mitte"><img src="assets/streifen.png" alt=""></div>
+      <div class="streifen-ebene ebene-1"><img src="assets/streifen.png" alt=""></div>
+      <div class="streifen-ebene ebene-2"><img src="assets/streifen.png" alt=""></div>
+    </div>
+
+    <div class="hero-inhalt">
+      <div class="logo-buehne">
+        <div class="logo-glow" aria-hidden="true"></div>
+
+        <!-- Logo: erscheint direkt (ohne Pokal davor) -->
+        <div class="logo-wrap">
+          <img src="assets/logo.png" alt="INSIDE1911 Tippspiel – Austria Wien" class="logo-bild"
+               onerror="this.closest('.logo-wrap').classList.add('img-fehlt')">
+          <svg class="logo-ersatz" viewBox="0 0 400 400" aria-hidden="true">
+            <circle cx="200" cy="200" r="196" fill="#4a2583"/>
+            <circle cx="200" cy="200" r="178" fill="#b3afb3"/>
+            <circle cx="200" cy="200" r="150" fill="#5b2d9e"/>
+            <circle cx="200" cy="170" r="95" fill="#b5854b" stroke="#2b1a05" stroke-width="5"/>
+            <polygon points="170,60 230,60 216,230 184,230" fill="#a9a5a9" stroke="#8d898d" stroke-width="3"/>
+            <polygon points="200,34 212,68 248,70 220,92 230,128 200,106 170,128 180,92 152,70 188,68"
+                     fill="#8f43d6" stroke="#4a2583" stroke-width="3"/>
+            <rect x="30" y="240" width="340" height="74" fill="#b3afb3" transform="rotate(-6 200 277)"/>
+            <text x="200" y="295" transform="rotate(-6 200 277)" text-anchor="middle"
+                  font-family="Arial Black, Arial, sans-serif" font-size="52" font-weight="900"
+                  fill="#4a2583" stroke="#ffffff" stroke-width="1.5">TIPPSPIEL</text>
+            <text x="200" y="368" text-anchor="middle" font-family="Arial, sans-serif"
+                  font-size="26" font-weight="bold" fill="#ffffff" letter-spacing="3">AUSTRIA WIEN</text>
+          </svg>
+        </div>
+      </div>
+
+      <p class="hero-untertitel">Offizielles inside1911-Tippspiel seit 2022</p>
+      <button id="heroWeiter" class="hero-pfeil" aria-label="Zum Tippspiel scrollen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       NAVIGATION (sichtbar nach Anmeldung)
+       ============================================================ -->
+  <nav id="hauptnav" class="versteckt">
+    <div class="nav-innen">
+      <span class="nav-marke">INSIDE1911<em>★</em></span>
+      <div class="nav-tabs" role="tablist">
+        <button class="nav-tab aktiv" data-panel="tipps">Tipps</button>
+        <button class="nav-tab" data-panel="tabelle">Tabelle</button>
+        <button class="nav-tab" data-panel="gewinne">Gewinne</button>
+        <button class="nav-tab" data-panel="erklaerung">Erklärung</button>
+        <button class="nav-tab" data-panel="kontakt">Kontakt</button>
+        <button class="nav-tab nav-tab-admin versteckt" data-panel="admin">Admin</button>
+      </div>
+      <button id="userChip" class="user-chip" title="Abmelden">
+        <span id="userChipIcon" class="plattform-icon"></span>
+        <span id="userChipName"></span>
+        <span class="chip-logout">✕</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ============================================================
+       HAUPTBEREICH
+       ============================================================ -->
+  <main id="app" class="versteckt">
+
+    <!-- ---------- TIPPS ---------- -->
+    <section id="panel-tipps" class="panel aktiv">
+      <div class="untertabs">
+        <button class="untertab aktiv" data-untertab="spiele">Spiele</button>
+        <button class="untertab" data-untertab="torschuetze">Torschützenkönig</button>
+        <button class="untertab" data-untertab="bonus">Bonus Tipps</button>
+      </div>
+
+      <div id="untertab-spiele" class="untertab-panel aktiv">
+        <div id="spieleListe" class="spiele-scroll"></div>
+      </div>
+
+      <div id="untertab-torschuetze" class="untertab-panel">
+        <div class="karte torschuetze-karte">
+          <h2>Torschützenkönig</h2>
+          <p class="hinweis-text">Wer erzielt in der Saison 2026/27 die meisten Tore
+             für die Austria (Bundesliga, Cup, Conference League)?
+             Tipp bis zum ersten Spiel möglich.</p>
+          <p id="torschuetzeDeadline" class="deadline-text"></p>
+          <div class="torschuetze-eingabe">
+            <select id="torschuetzeSelect"></select>
+          </div>
+          <p id="torschuetzeStatus" class="status-text"></p>
+        </div>
+      </div>
+
+      <div id="untertab-bonus" class="untertab-panel">
+        <div class="karte torschuetze-karte">
+          <h2>Bonus Tipps</h2>
+          <p class="hinweis-text">Pro richtige Antwort gibt es <strong>3 Punkte</strong>.
+             Tippbar bis zum ersten Spiel möglich. Weitere Fragen folgen!</p>
+          <p id="bonusDeadline" class="deadline-text"></p>
+          <div id="bonusListe"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- TABELLE ---------- -->
+    <section id="panel-tabelle" class="panel">
+      <div class="karte">
+        <h2>Tabelle</h2>
+        <div class="suche-wrap">
+          <input type="search" id="tabelleSuche" placeholder="Nach Namen suchen …" autocomplete="off">
+        </div>
+        <div class="tabelle-legende">
+          <span>Tipper</span><span>Punkte</span>
+        </div>
+        <ol id="tabelleListe" class="tabelle-liste"></ol>
+      </div>
+    </section>
+
+    <!-- ---------- GEWINNE ---------- -->
+    <section id="panel-gewinne" class="panel">
+      <h2 class="panel-titel">Das gibt es zu gewinnen</h2>
+      <div id="gewinneListe" class="gewinne-raster"></div>
+    </section>
+
+    <!-- ---------- ERKLÄRUNG / REGELN ---------- -->
+    <section id="panel-erklaerung" class="panel">
+      <h2 class="panel-titel">Erklärung</h2>
+      <div class="regeln">
+        <div class="regel-block">
+          <p class="regel-zeile">Pro Spiel 2 Tipps</p>
+          <p class="regel-zeile">Nur Bewerbsspiele</p>
+        </div>
+        <div class="regel-block">
+          <h3 class="regel-titel">Punkte</h3>
+          <p class="regel-zeile">Tipp: <strong>1P</strong></p>
+          <p class="regel-zeile">Torschützenkönig: <strong>3P</strong></p>
+          <p class="regel-zeile">Bonus-Frage: <strong>3P</strong></p>
+        </div>
+        <div class="regel-block">
+          <h3 class="regel-titel">Gewinn</h3>
+          <p class="regel-zeile">Nur für Mitglieder<br>der Saison 2026/27</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- KONTAKT ---------- -->
+    <section id="panel-kontakt" class="panel">
+      <div class="karte kontakt-karte">
+        <h2>Kontakt</h2>
+        <p>Fragen, Wünsche oder Probleme beim Tippen? Melde dich gerne direkt bei mir:</p>
+        <div class="kontakt-links">
+          <a class="kontakt-link" href="https://www.instagram.com/inside1911" target="_blank" rel="noopener">
+            <span class="plattform-icon icon-gross" data-icon="instagram"></span>
+            <span><strong>Instagram</strong><br>@inside1911</span>
+          </a>
+          <a class="kontakt-link" href="mailto:inside1911@gmx.at">
+            <span class="plattform-icon icon-gross" data-icon="mail"></span>
+            <span><strong>E-Mail</strong><br>inside1911@gmx.at</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- ADMIN (nur für Samuel) ---------- -->
+    <section id="panel-admin" class="panel">
+      <div class="karte">
+        <h2>Admin – Ergebnisse</h2>
+        <p class="hinweis-text">Trage nach Abpfiff das Ergebnis ein – es wird automatisch
+           gespeichert. Die Punkte werden sofort berechnet und die Tippabgabe
+           für das nächste Spiel öffnet von selbst.</p>
+        <div id="adminListe"></div>
+      </div>
+
+      <div class="karte" style="margin-top: 22px;">
+        <h2>Torschützenkönig der Saison</h2>
+        <p class="hinweis-text">Am Saisonende den tatsächlichen Torschützenkönig wählen –
+           wer ihn getippt hat, bekommt 3 Punkte. Wird automatisch gespeichert.</p>
+        <div class="torschuetze-eingabe">
+          <select id="adminTskSelect"></select>
+        </div>
+        <p id="adminTskStatus" class="status-text"></p>
+      </div>
+
+      <div class="karte" style="margin-top: 22px;">
+        <h2>Bonus-Tipps – richtige Antworten</h2>
+        <p class="hinweis-text">Trage die richtige Antwort je Bonus-Frage ein –
+           wer sie getippt hat, bekommt 3 Punkte. Wird automatisch gespeichert.</p>
+        <div id="adminBonusListe"></div>
+      </div>
+
+      <div class="karte" style="margin-top: 22px;">
+        <h2>Angemeldete User</h2>
+        <p class="hinweis-text">Alle Teilnehmer im Überblick. Hat jemand seinen PIN
+           vergessen, kannst du hier einen neuen PIN vergeben und ihm mitteilen.
+           Test-Accounts kannst du mit „Löschen“ entfernen.</p>
+        <div class="user-verwaltung-kopf">
+          <input type="search" id="userSuche" placeholder="User suchen …" autocomplete="off">
+          <span id="userAnzahl" class="user-anzahl"></span>
+        </div>
+        <div id="userVerwaltung"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================================================
+       ANMELDUNG (Overlay)
+       ============================================================ -->
+  <div id="authOverlay" class="auth-overlay versteckt">
+    <div class="auth-karte">
+      <h2 id="authTitel">Anmeldung</h2>
+
+      <!-- Schritt 1: Plattform + Name -->
+      <div id="authSchritt1">
+        <p class="auth-erklaerung">Wähle eine Option &amp; melde dich so jederzeit
+           auf dieser Seite an.</p>
+        <div class="plattform-raster">
+          <button class="plattform-btn" data-plattform="name">
+            <span class="plattform-icon icon-gross" data-icon="name"></span>Name
+          </button>
+          <button class="plattform-btn" data-plattform="instagram">
+            <span class="plattform-icon icon-gross" data-icon="instagram"></span>Instagram
+          </button>
+          <button class="plattform-btn" data-plattform="facebook">
+            <span class="plattform-icon icon-gross" data-icon="facebook"></span>Facebook
+          </button>
+          <button class="plattform-btn plattform-btn-asb" data-plattform="asb">
+            <span class="asb-logo"><img src="assets/austriansoccerboard.png" alt="ASB"></span>ASB
+          </button>
+        </div>
+        <input type="text" id="authName" placeholder="Dein Name / Username" maxlength="30" autocomplete="off">
+        <button id="authWeiter" class="btn btn-primaer btn-breit">Weiter</button>
+      </div>
+
+      <!-- Schritt 2a: Neuer Nutzer – PIN verpflichtend -->
+      <div id="authSchritt2neu" class="versteckt">
+        <p class="auth-erklaerung">Lege einen <strong>4-stelligen PIN</strong> fest.
+           Mit diesem kannst du dich dann immer in Kombination mit deinem Namen anmelden.</p>
+        <input type="text" id="authPinNeu" class="pin-eingabe" inputmode="numeric" maxlength="4"
+               placeholder="PIN" autocomplete="off">
+        <div class="auth-btn-zeile">
+          <button id="authStart" class="btn btn-primaer">Gemma!</button>
+          <button id="authZurueckNeu" class="link-btn">Zurück</button>
+        </div>
+      </div>
+
+      <!-- Schritt 2b: Bestehender Nutzer – PIN-Abfrage -->
+      <div id="authSchritt2pin" class="versteckt">
+        <p class="auth-erklaerung">Willkommen zurück, <strong id="authBekannterName"></strong>!<br>
+           Gib deinen 4-stelligen PIN ein:</p>
+        <input type="text" id="authPinAbfrage" class="pin-eingabe" inputmode="numeric" maxlength="4"
+               placeholder="PIN" autocomplete="off">
+        <div class="auth-btn-zeile">
+          <button id="authPinOk" class="btn btn-primaer">Anmelden</button>
+          <button id="authZurueck" class="link-btn">Zurück</button>
+        </div>
+      </div>
+
+      <!-- Schritt 2c: Admin-Anmeldung mit echtem Firebase-Passwort -->
+      <div id="authSchrittAdmin" class="versteckt">
+        <p class="auth-erklaerung">Willkommen zurück, <strong>Admin</strong>!<br>
+           Gib dein Passwort ein:</p>
+        <input type="password" id="authAdminPasswort" class="auth-email-eingabe"
+               placeholder="Passwort" autocomplete="current-password">
+        <div class="auth-btn-zeile">
+          <button id="authAdminOk" class="btn btn-primaer">Anmelden</button>
+          <button id="authZurueckAdmin" class="link-btn">Zurück</button>
+        </div>
+      </div>
+
+      <p id="authFehler" class="fehler-text"></p>
+    </div>
+  </div>
+
+  <!-- Lade-Zustand: sichtbar solange die Datenbank noch verbindet -->
+  <div id="authLaden" class="auth-overlay versteckt">
+    <div class="auth-karte">
+      <p class="auth-erklaerung" id="authLadenText">Verbinde …</p>
+    </div>
+  </div>
+
+  <footer id="seitenfuss" class="versteckt">
+    <p>INSIDE1911 Tippspiel · Austria Wien · est. 2018</p>
+    <p>
+      <a href="https://www.instagram.com/inside1911" target="_blank" rel="noopener">Instagram</a> ·
+      <a href="mailto:inside1911@gmx.at">inside1911@gmx.at</a>
+    </p>
+  </footer>
+
+  <script src="data.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

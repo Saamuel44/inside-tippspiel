@@ -1,0 +1,24 @@
+BILDER FÜR DAS TIPPSPIEL
+=========================
+
+DIESE BILDER SIND BEREITS EINGEBAUT (bitte Dateinamen nicht ändern):
+
+1. logo.png        -> das fertige runde Tippspiel-Logo (für Web verkleinert)
+2. pokal.png       -> der Pokal (weißer Hintergrund wurde entfernt, verkleinert)
+3. hintergrund.jpg -> der beige Papier-Hintergrund (komprimiert: 15 MB -> 0,4 MB)
+4. streifen.png    -> die Original-Streifengrafik (wird 3x verwendet wie am Cover)
+
+Im Ordner "original" liegen deine unveränderten Original-Dateien als Sicherung
+(inkl. Cover Story.png als Vorlage). Diese werden von der Webseite NICHT geladen.
+
+NOCH ZU BEFÜLLEN:
+- wappen/     -> Vereinswappen für die Spiele (Dateinamen trägst du in data.js ein,
+                 z. B. austria.png, gegner1.png ...)
+- gewinne/    -> Fotos der Gewinne (platz1.jpg, platz2.jpg, platz3.jpg)
+- sponsoren/  -> Sponsorenlogos (sponsor1.png, sponsor2.png, sponsor3.png)
+
+Spiele, Anstoßzeiten, Kader und Gewinne trägst du in der Datei data.js ein –
+dort ist alles auf Deutsch kommentiert.
+
+TIPP: Große Fotos vor dem Hineinlegen am besten auf unter 500 KB verkleinern,
+damit die Seite schnell lädt.

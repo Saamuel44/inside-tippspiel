@@ -1,0 +1,1238 @@
+/* =====================================================================
+   INSIDE1911 TIPPSPIEL – DESIGN
+   Modern, clean & schlicht: flache Flächen, sanfte Schatten,
+   automatisches Speichern statt vieler Buttons.
+   Farben aus dem Logo: Violett, Hellviolett, Grau, Beige.
+   ===================================================================== */
+
+:root {
+  --violett-dunkel: #4a2583;
+  --violett: #5b2d9e;
+  --violett-hell: #a05ce6;
+  --grau: #b3afb3;
+  --grau-dunkel: #8d898d;
+  --beige: #ddd2bd;
+  --beige-hell: #ece4d2;
+  --braun: #b5854b;
+  --weiss: #ffffff;
+  --tinte: #2f2240;
+  --text-leise: #6f6781;
+  --linie: 1px solid rgba(74, 37, 131, 0.1);
+  --schatten: 0 1px 2px rgba(47, 34, 64, 0.05), 0 6px 20px rgba(47, 34, 64, 0.06);
+  --schatten-stark: 0 2px 4px rgba(47, 34, 64, 0.06), 0 14px 36px rgba(47, 34, 64, 0.12);
+  --radius: 18px;
+  /* Moderne, cleane UI-Schrift; die Typewriter-Schrift bleibt als
+     Marken-Akzent für Überschriften (--schrift-marke). */
+  --schrift: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --schrift-marke: "American Typewriter", "Cutive", "Courier New", serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--schrift);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.45;
+  color: var(--tinte);
+  background-color: var(--beige);
+  background-image:
+    url("assets/hintergrund.jpg"),
+    radial-gradient(ellipse at center, #e7decb 0%, #d9cdb5 55%, #b8ab92 100%);
+  background-size: cover, cover;
+  background-attachment: fixed, fixed;
+  background-position: center, center;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.versteckt { display: none !important; }
+
+h2 {
+  font-family: var(--schrift-marke);
+  font-size: 1.02rem;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: var(--violett-dunkel);
+  margin-bottom: 16px;
+}
+
+/* =====================================================================
+   HERO + ERÖFFNUNGS-ANIMATION
+   Ablauf: Streifen fahren von links oben herein → Pokal erscheint →
+   das volle Logo blendet sich rund um den Pokal ein.
+   (Geometrie exakt vom Original-Cover übernommen – nicht verändern)
+   ===================================================================== */
+
+#hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ---------- Diagonale Streifen (Original-Grafik, 3 Bahnen, 45°) ---------- */
+.streifen-feld {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* An die Breite (vw) gekoppelt statt an vmin: am Handy ist die Breite
+   ohnehin die kleinere Seite (identisches Ergebnis wie vorher), am
+   breiten Laptop-Bildschirm sorgt das dafür, dass die Streifen über
+   die volle Länge reichen statt an der Höhe gekoppelt zu bleiben. */
+.streifen-ebene {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 139vw;
+  height: 178vw;
+  margin-left: -69.5vw;
+  margin-top: -89vw;
+}
+
+.ebene-1 { transform: translate(60vw, -60vw); }
+.ebene-2 { transform: translate(-60vw, 60vw); }
+
+.streifen-ebene img {
+  width: 100%;
+  height: 100%;
+  animation: streifenRein 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform;
+}
+.ebene-1 img { animation-delay: 0.12s; }
+.ebene-2 img { animation-delay: 0.22s; }
+
+@keyframes streifenRein {
+  from { transform: translate(-135vmax, -135vmax); }
+  to   { transform: translate(0, 0); }
+}
+
+/* ---------- Logo-Bühne ---------- */
+.hero-inhalt {
+  position: relative;
+  text-align: center;
+  padding: 24px;
+}
+
+.logo-buehne {
+  position: relative;
+  width: min(78vw, 56svh, 460px);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+}
+
+.logo-glow {
+  position: absolute;
+  inset: -45%;
+  background: radial-gradient(circle, rgba(255, 252, 240, 1) 36%, rgba(255, 252, 240, 0) 70%);
+  animation: weichRein 0.7s ease 0.5s both;
+}
+
+.logo-bild { width: 100%; height: 100%; object-fit: contain; }
+.logo-ersatz { display: none; width: 100%; height: 100%; }
+.img-fehlt img { display: none; }
+.img-fehlt .logo-ersatz { display: block; }
+
+/* Logo erscheint direkt nach den Streifen (kein Pokal davor) */
+.logo-wrap {
+  position: absolute;
+  inset: 0;
+  animation: logoRein 0.6s cubic-bezier(0.34, 1.3, 0.64, 1) 0.6s both;
+  filter: drop-shadow(0 10px 30px rgba(47, 34, 64, 0.35));
+}
+
+@keyframes logoRein {
+  from { opacity: 0; transform: scale(0.7); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes weichRein { from { opacity: 0; } to { opacity: 1; } }
+
+.hero-untertitel {
+  font-family: var(--schrift-marke);
+  display: inline-block;
+  margin-top: 20px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: rgba(236, 228, 210, 0.82);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--violett-dunkel);
+  animation: weichRein 0.6s ease 1.2s both;
+}
+
+.hero-pfeil {
+  display: block;
+  margin: 16px auto 0;
+  border: none;
+  background: none;
+  color: var(--violett-dunkel);
+  cursor: pointer;
+  animation: weichRein 0.6s ease 1.4s both, huepfen 1.8s ease 2.1s infinite;
+}
+.hero-pfeil svg { width: 26px; height: 26px; }
+
+@keyframes huepfen {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(7px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streifen-ebene img, .logo-wrap, .logo-glow, .hero-untertitel, .hero-pfeil {
+    animation: none !important;
+  }
+}
+
+/* =====================================================================
+   NAVIGATION – helle, ruhige Leiste
+   ===================================================================== */
+#hauptnav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(236, 228, 210, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: var(--linie);
+  animation: weichRein 0.5s ease both;
+}
+
+.nav-innen {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 16px;
+  flex-wrap: wrap;
+}
+
+.nav-marke {
+  font-family: var(--schrift-marke);
+  color: var(--violett-dunkel);
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+.nav-marke em { color: var(--violett-hell); font-style: normal; }
+
+.nav-tabs {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.nav-tab {
+  font-family: var(--schrift);
+  font-size: 0.92rem;
+  letter-spacing: 0.5px;
+  padding: 16px 14px 13px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--text-leise);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.nav-tab:hover { color: var(--violett-dunkel); }
+.nav-tab.aktiv {
+  color: var(--violett-dunkel);
+  font-weight: bold;
+  border-bottom-color: var(--violett-hell);
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: var(--linie);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--violett-dunkel);
+  font-family: var(--schrift);
+  font-size: 0.88rem;
+  padding: 6px 12px;
+  cursor: pointer;
+  max-width: 220px;
+  transition: background 0.2s;
+}
+.user-chip:hover { background: rgba(255, 255, 255, 0.9); }
+#userChipName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip-logout { opacity: 0.45; font-size: 0.75rem; }
+
+/* =====================================================================
+   PANELS & KARTEN
+   ===================================================================== */
+#app { max-width: 860px; margin: 0 auto; padding: 32px 16px 60px; }
+
+.panel { display: none; }
+.panel.aktiv { display: block; animation: weichRein 0.35s ease; }
+
+.panel-titel {
+  font-family: var(--schrift-marke);
+  text-align: center;
+  font-size: 1.02rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--violett-dunkel);
+  margin-bottom: 22px;
+}
+
+.karte {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius);
+  box-shadow: var(--schatten);
+  padding: 26px;
+  backdrop-filter: blur(3px);
+}
+
+.hinweis-text { color: var(--text-leise); margin-bottom: 10px; line-height: 1.55; font-size: 0.94rem; }
+.deadline-text { color: var(--violett); margin-bottom: 14px; font-size: 0.94rem; }
+.status-text { margin-top: 10px; color: #1d7a36; font-size: 0.9rem; min-height: 1.3em; transition: opacity 0.3s; }
+.fehler-text { margin-top: 12px; color: #b3261e; font-size: 0.92rem; min-height: 1.3em; text-align: center; }
+
+/* ---------- Buttons (bewusst wenige) ---------- */
+.btn {
+  font-family: var(--schrift);
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
+  padding: 13px 26px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.12s, background 0.2s, opacity 0.2s;
+}
+.btn:active { transform: scale(0.98); }
+.btn-primaer { background: var(--violett-dunkel); color: var(--weiss); font-weight: bold; }
+.btn-primaer:hover { background: var(--violett); }
+.btn-sekundaer { background: transparent; color: var(--violett-dunkel); border: 1.5px solid rgba(74, 37, 131, 0.3); }
+.btn-breit { width: 100%; margin-top: 14px; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.link-btn {
+  background: none;
+  border: none;
+  font-family: var(--schrift);
+  font-size: 0.88rem;
+  color: var(--text-leise);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 10px;
+}
+.link-btn:hover { color: var(--violett-dunkel); }
+
+/* =====================================================================
+   TIPPS – UNTERTABS (Segment-Schalter)
+   ===================================================================== */
+.untertabs {
+  display: flex;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto 22px;
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  padding: 4px;
+  /* Bei vielen Reitern (z. B. am Handy) horizontal scrollbar statt umbrechen */
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.untertabs::-webkit-scrollbar { display: none; }
+
+.untertab {
+  font-family: var(--schrift);
+  font-size: 0.92rem;
+  padding: 9px 20px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--text-leise);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.untertab.aktiv {
+  background: var(--violett-dunkel);
+  color: var(--weiss);
+  font-weight: bold;
+}
+
+.untertab-panel { display: none; }
+.untertab-panel.aktiv { display: block; }
+
+/* =====================================================================
+   SPIELE / TIPPABGABE – modernes, cleanes Layout
+   (aktuelles Spiel groß oben, Rest als kompakte Zeilen)
+   ===================================================================== */
+.spiele-scroll {
+  max-height: 78vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 4px 10px 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--violett-hell) transparent;
+}
+
+.mini-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-leise);
+  margin: 12px 4px 0;
+}
+
+/* ---------- Aktuelles Spiel: große Karte ---------- */
+.match-aktuell {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
+  box-shadow: var(--schatten-stark);
+  padding: 22px 20px 24px;
+  text-align: center;
+}
+
+.match-kopf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.bewerb-pill {
+  background: var(--violett-dunkel);
+  color: var(--weiss);
+  font-size: 0.66rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+.runde-text {
+  color: var(--text-leise);
+  font-size: 0.76rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.match-teams {
+  --wappen: 92px;             /* Größe = runder Teil des Austria-Wappens */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  max-width: 360px;
+  margin: 2px auto 0;
+  padding-top: calc(var(--wappen) * 0.3); /* Platz für die Austria-Sterne */
+}
+.mt-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.mt-name {
+  font-weight: bold;
+  color: var(--violett-dunkel);
+  font-size: 0.98rem;
+  line-height: 1.2;
+}
+.mt-mid { display: flex; align-items: center; justify-content: center; }
+.mt-vs { font-size: 1.5rem; color: var(--grau); font-weight: bold; }
+.mt-score { font-size: 2rem; font-weight: bold; color: var(--violett-dunkel); }
+
+/* Wappen-Box: feste Höhe = Kreisgröße. Gegner-Wappen füllen die Box.
+   Das Austria-Wappen wird so skaliert, dass nur sein RUNDER Teil die
+   Boxhöhe füllt – die Sterne ragen oben heraus (overflow sichtbar). */
+.wappen-box {
+  position: relative;
+  width: var(--wappen);
+  height: var(--wappen);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.wappen-box .wappen {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
+}
+.wappen-box.austria { overflow: visible; }
+.wappen-box.austria .wappen {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: auto;                /* Kreis ≈ Boxbreite, Sterne ragen darüber */
+}
+
+.wappen-ersatz {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.25rem;
+  color: var(--weiss);
+  background: var(--violett-dunkel);
+  clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
+}
+.wappen-ersatz.gast { background: var(--grau-dunkel); }
+
+.match-meta {
+  color: var(--text-leise);
+  font-size: 0.84rem;
+  margin-top: 10px;
+}
+
+/* ---------- Tipp-Eingabe (Wappen & Tipps direkt im Blick) ---------- */
+.tipp-eingabe {
+  margin-top: 18px;
+  border-top: var(--linie);
+  padding-top: 18px;
+  text-align: center;
+}
+.tipp-caption {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-leise);
+  margin-bottom: 14px;
+}
+.tipp-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  justify-items: center;
+  gap: 12px 8px;
+  max-width: 360px;
+  margin: 0 auto;
+}
+.tipp-zahl {
+  width: 74px;
+  height: 60px;
+  font-family: var(--schrift);
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  color: var(--violett-dunkel);
+  background: var(--weiss);
+  border: 1px solid rgba(74, 37, 131, 0.16);
+  border-radius: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.tipp-zahl:focus {
+  border-color: var(--violett-hell);
+  box-shadow: 0 0 0 3px rgba(160, 92, 230, 0.18);
+}
+.tipp-colon { font-size: 1.4rem; font-weight: bold; color: var(--grau); }
+
+.tipp-speichern-btn {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  margin: 18px auto 0;
+}
+
+.countdown {
+  margin-top: 12px;
+  color: var(--violett);
+  font-size: 0.84rem;
+}
+
+/* ---------- Aktuelles Spiel, aber Tippabgabe schon zu ---------- */
+.tipp-gesperrt {
+  margin-top: 18px;
+  border-top: var(--linie);
+  padding-top: 16px;
+}
+.tipp-gespeichert { margin-top: 10px; color: var(--text-leise); font-size: 0.9rem; }
+.tipp-gespeichert strong { color: var(--violett-dunkel); }
+
+.schloss-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--grau-dunkel);
+  font-size: 0.88rem;
+}
+.schloss-banner svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* ---------- Kompakte Zeile (vergangen / kommend) ---------- */
+.match-mini {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 6px rgba(47, 34, 64, 0.05);
+}
+.match-mini.vergangen { opacity: 0.72; }
+
+.mm-teams {
+  display: grid;
+  grid-template-columns: 30px 1fr auto 1fr 30px;
+  align-items: center;
+  gap: 10px;
+}
+.mm-crest { width: 30px; height: 30px; object-fit: contain; }
+.mm-ersatz {
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.58rem; font-weight: bold; color: var(--weiss);
+  background: var(--grau-dunkel); border-radius: 7px;
+}
+.mm-name {
+  font-weight: bold;
+  color: var(--violett-dunkel);
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+.mm-name.r { text-align: left; }
+.mm-mid { min-width: 42px; text-align: center; }
+.mm-score { font-weight: bold; color: var(--violett-dunkel); font-size: 1.05rem; }
+.mm-vs { color: var(--grau); font-weight: bold; }
+
+.mm-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: var(--linie);
+}
+.mm-meta {
+  color: var(--text-leise);
+  font-size: 0.73rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--text-leise);
+  white-space: nowrap;
+}
+.mm-badge svg { width: 13px; height: 13px; }
+.mm-badge.ja { color: #1d7a36; font-weight: bold; }
+.mm-badge.nein { color: var(--grau-dunkel); }
+.mm-badge.tipp { color: var(--violett); }
+
+/* ---------- Gesperrtes Spiel (kein Tippspiel, z. B. gegen Red Bull) ---------- */
+.match-gesperrt {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1.5px solid rgba(74, 37, 131, 0.22);
+  border-radius: 18px;
+  padding: 16px 18px;
+  box-shadow: var(--schatten);
+  text-align: center;
+}
+.match-gesperrt .match-kopf { margin-bottom: 10px; }
+
+.mg-teams {
+  display: grid;
+  grid-template-columns: 30px 1fr auto 1fr 30px;
+  align-items: center;
+  gap: 10px;
+}
+.mg-teams .mm-crest { filter: grayscale(0.35); }
+
+.mg-sperre {
+  max-width: 440px;
+  margin: 14px auto 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  background: rgba(74, 37, 131, 0.08);
+  border-radius: 14px;
+}
+.mg-schloss { color: var(--violett-dunkel); line-height: 0; }
+.mg-schloss svg { width: 30px; height: 30px; }
+.mg-text {
+  color: var(--tinte);
+  font-size: 0.94rem;
+  line-height: 1.55;
+  font-weight: bold;
+}
+.match-gesperrt .match-meta { margin-top: 10px; }
+
+/* =====================================================================
+   TORSCHÜTZENKÖNIG
+   ===================================================================== */
+.torschuetze-karte { text-align: center; }
+
+.torschuetze-eingabe {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+#torschuetzeSelect {
+  font-family: var(--schrift);
+  font-size: 0.98rem;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(74, 37, 131, 0.16);
+  background: var(--weiss);
+  color: var(--tinte);
+  min-width: min(340px, 100%);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+#torschuetzeSelect:focus {
+  border-color: var(--violett-hell);
+  box-shadow: 0 0 0 3px rgba(160, 92, 230, 0.18);
+}
+#torschuetzeSelect:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ---------- Bonus-Fragen ---------- */
+.bonus-frage {
+  text-align: center;
+  padding: 14px 0;
+}
+.bonus-frage + .bonus-frage { border-top: var(--linie); }
+.bonus-text {
+  color: var(--violett-dunkel);
+  font-weight: bold;
+  font-size: 0.98rem;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+.bonus-select {
+  font-family: var(--schrift);
+  font-size: 0.98rem;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(74, 37, 131, 0.16);
+  background: var(--weiss);
+  color: var(--tinte);
+  min-width: min(300px, 100%);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.bonus-select:focus {
+  border-color: var(--violett-hell);
+  box-shadow: 0 0 0 3px rgba(160, 92, 230, 0.18);
+}
+.bonus-select:disabled { opacity: 0.55; cursor: not-allowed; }
+.bonus-status { margin-top: 10px; }
+/* Admin-Variante: linksbündig, kompakter */
+#adminBonusListe .bonus-frage { text-align: left; }
+#adminBonusListe .bonus-text { font-size: 0.92rem; }
+
+/* =====================================================================
+   TABELLE
+   ===================================================================== */
+.suche-wrap { margin-bottom: 16px; }
+
+#tabelleSuche {
+  width: 100%;
+  font-family: var(--schrift);
+  font-size: 0.98rem;
+  padding: 12px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(74, 37, 131, 0.16);
+  background: var(--weiss);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+#tabelleSuche:focus {
+  border-color: var(--violett-hell);
+  box-shadow: 0 0 0 3px rgba(160, 92, 230, 0.18);
+}
+
+.tabelle-legende {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 12px 10px;
+  font-size: 0.66rem;
+  color: var(--text-leise);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.tabelle-liste { list-style: none; }
+
+.tab-zeile {
+  display: grid;
+  grid-template-columns: 30px 20px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 14px;
+}
+.tab-zeile:not(:last-child) { border-bottom: var(--linie); }
+
+/* Rang als kleiner Kreis; Top 3 dezent in Gold/Silber/Bronze */
+.tab-rang {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.82rem;
+  background: rgba(74, 37, 131, 0.08);
+  color: var(--violett-dunkel);
+}
+.tab-zeile.platz-1 .tab-rang { background: #e8c95a; color: #4a3a00; }
+.tab-zeile.platz-2 .tab-rang { background: #d6d3d6; color: #4a4a4a; }
+.tab-zeile.platz-3 .tab-rang { background: #e0b283; color: #5a3a15; }
+
+.tab-zeile.ich {
+  background: rgba(160, 92, 230, 0.1);
+  border-bottom-color: transparent;
+}
+
+.tab-info { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.tab-name {
+  font-weight: bold;
+  color: var(--tinte);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tab-du {
+  font-size: 0.58rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: var(--violett-hell);
+  color: var(--weiss);
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.tab-tsk {
+  font-size: 0.74rem;
+  color: var(--text-leise);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab-punkte {
+  font-size: 1.35rem;
+  font-weight: bold;
+  color: var(--violett-dunkel);
+  white-space: nowrap;
+}
+.tab-punkte small { font-size: 0.6rem; color: var(--text-leise); margin-left: 2px; }
+
+.leere-liste { text-align: center; color: var(--text-leise); padding: 20px; }
+
+/* ---------- Plattform-Icons ---------- */
+.plattform-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.plattform-icon svg { width: 100%; height: 100%; }
+.plattform-icon.icon-gross { width: 28px; height: 28px; }
+
+/* =====================================================================
+   GEWINNE
+   ===================================================================== */
+.gewinne-raster { display: grid; gap: 20px; }
+
+.gewinn-karte {
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: var(--radius);
+  box-shadow: var(--schatten);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 230px 1fr;
+}
+
+.gewinn-bild-wrap {
+  position: relative;
+  min-height: 185px;
+  background: linear-gradient(150deg, var(--violett) 0%, var(--violett-hell) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gewinn-bild-wrap img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+.gewinn-platzhalter { font-size: 3.4rem; opacity: 0.9; }
+
+.gewinn-band {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--violett-dunkel);
+  font-weight: bold;
+  font-size: 0.66rem;
+  letter-spacing: 1.5px;
+  padding: 5px 11px;
+  border-radius: 8px;
+  z-index: 2;
+}
+.gewinn-karte.platz-1 .gewinn-band { background: #e8c95a; color: #4a3a00; }
+
+.gewinn-text { padding: 22px 24px; }
+.gewinn-text h3 { font-family: var(--schrift-marke); color: var(--violett-dunkel); font-size: 1.1rem; margin-bottom: 8px; }
+.gewinn-text p { color: var(--text-leise); line-height: 1.6; font-size: 0.92rem; }
+
+.sponsor-zeile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: var(--linie);
+  font-size: 0.82rem;
+  color: var(--text-leise);
+}
+.sponsor-zeile img {
+  width: 40px; height: 40px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: var(--weiss);
+  border: var(--linie);
+}
+.sponsor-logo-ersatz {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px;
+  background: var(--violett-dunkel);
+  color: var(--weiss);
+  font-weight: bold;
+}
+.sponsor-zeile a { color: var(--violett); font-weight: bold; }
+
+/* =====================================================================
+   ERKLÄRUNG / REGELN
+   ===================================================================== */
+.regeln {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.regel-block {
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: var(--radius);
+  box-shadow: var(--schatten);
+  padding: 22px 20px;
+  text-align: center;
+}
+
+.regel-titel {
+  font-family: var(--schrift-marke);
+  color: var(--violett-dunkel);
+  font-size: 1.15rem;
+  margin-bottom: 8px;
+}
+
+.regel-zeile {
+  color: var(--tinte);
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+.regel-zeile strong { color: var(--violett-dunkel); }
+
+/* =====================================================================
+   KONTAKT
+   ===================================================================== */
+.kontakt-karte { text-align: center; }
+.kontakt-karte p { margin-bottom: 18px; color: var(--text-leise); }
+
+.kontakt-links {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.kontakt-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  text-decoration: none;
+  color: var(--violett-dunkel);
+  background: var(--weiss);
+  border: var(--linie);
+  border-radius: 14px;
+  padding: 14px 22px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+.kontakt-link:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--schatten);
+}
+
+/* =====================================================================
+   ADMIN (Ergebnisse speichern automatisch)
+   ===================================================================== */
+.admin-zeile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 14px 0;
+  border-bottom: var(--linie);
+}
+.admin-zeile:last-child { border-bottom: none; }
+.admin-spielname { flex: 1; min-width: 180px; font-weight: bold; color: var(--violett-dunkel); font-size: 0.94rem; }
+.admin-datum { font-size: 0.76rem; color: var(--text-leise); width: 100%; }
+.admin-status { color: #1d7a36; font-size: 0.88rem; min-width: 90px; }
+.admin-zeile .tipp-zahl { width: 54px; height: 46px; font-size: 1.15rem; }
+
+/* ---------- Admin: User-Verwaltung ---------- */
+.user-verwaltung-kopf {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+#userSuche {
+  flex: 1;
+  font-family: var(--schrift);
+  font-size: 0.95rem;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(74, 37, 131, 0.16);
+  background: var(--weiss);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+#userSuche:focus { border-color: var(--violett-hell); box-shadow: 0 0 0 3px rgba(160, 92, 230, 0.18); }
+.user-anzahl { font-size: 0.82rem; color: var(--text-leise); white-space: nowrap; }
+
+.user-zeile {
+  display: grid;
+  grid-template-columns: 22px 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  border-bottom: var(--linie);
+}
+.user-zeile:last-child { border-bottom: none; }
+.user-zeile .plattform-icon { width: 20px; height: 20px; }
+.user-zeile-name { font-weight: bold; color: var(--tinte); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-zeile-name small { display: block; font-weight: normal; font-size: 0.74rem; color: var(--text-leise); }
+.user-pin-status { font-size: 0.78rem; color: var(--text-leise); white-space: nowrap; }
+.user-pin-status.offen { color: #b58a1c; }
+.btn-reset {
+  font-family: var(--schrift);
+  font-size: 0.82rem;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(74, 37, 131, 0.25);
+  background: transparent;
+  color: var(--violett-dunkel);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.btn-reset:hover { background: rgba(160, 92, 230, 0.12); }
+.user-aktionen { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.btn-loeschen {
+  font-family: var(--schrift);
+  font-size: 0.82rem;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(179, 38, 30, 0.35);
+  background: transparent;
+  color: #b3261e;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.btn-loeschen:hover { background: rgba(179, 38, 30, 0.1); }
+
+/* =====================================================================
+   ANMELDE-OVERLAY
+   ===================================================================== */
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(47, 34, 64, 0.5);
+  backdrop-filter: blur(5px);
+  padding: 16px;
+  animation: weichRein 0.4s ease;
+}
+
+.auth-karte {
+  width: min(430px, 100%);
+  background: var(--beige-hell);
+  border-radius: 22px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+  padding: 30px 28px;
+  text-align: center;
+  animation: authRein 0.45s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+@keyframes authRein {
+  from { opacity: 0; transform: translateY(40px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.auth-karte h2 { margin-bottom: 4px; }
+
+.auth-erklaerung { color: var(--text-leise); margin: 12px 0 18px; line-height: 1.55; font-size: 0.92rem; }
+
+.plattform-raster {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.plattform-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--schrift);
+  font-size: 0.82rem;
+  padding: 15px 8px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(74, 37, 131, 0.15);
+  background: var(--weiss);
+  color: var(--tinte);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+}
+.plattform-btn:hover { transform: translateY(-2px); }
+.plattform-btn.gewaehlt {
+  border-color: var(--violett-hell);
+  background: #f6efff;
+  font-weight: bold;
+  box-shadow: 0 0 0 2px var(--violett-hell);
+}
+/* ASB-Banner-Logo im Anmelde-Button (breit statt quadratisch) */
+.asb-logo { display: flex; align-items: center; justify-content: center; height: 30px; }
+.asb-logo img { height: 22px; width: auto; max-width: 150px; object-fit: contain; }
+
+#authName {
+  width: 100%;
+  font-family: var(--schrift);
+  font-size: 1rem;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(74, 37, 131, 0.16);
+  background: var(--weiss);
+  outline: none;
+  text-align: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+#authName:focus {
+  border-color: var(--violett-hell);
+  box-shadow: 0 0 0 3px rgba(160, 92, 230, 0.18);
+}
+
+.pin-eingabe {
+  width: 170px;
+  font-family: var(--schrift);
+  font-size: 1.7rem;
+  letter-spacing: 12px;
+  text-align: center;
+  padding: 10px 0 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(74, 37, 131, 0.16);
+  background: var(--weiss);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.pin-eingabe:focus {
+  border-color: var(--violett-hell);
+  box-shadow: 0 0 0 3px rgba(160, 92, 230, 0.18);
+}
+
+.auth-email-eingabe {
+  width: 100%;
+  font-family: var(--schrift);
+  font-size: 1rem;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(74, 37, 131, 0.16);
+  background: var(--weiss);
+  outline: none;
+  text-align: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.auth-email-eingabe:focus {
+  border-color: var(--violett-hell);
+  box-shadow: 0 0 0 3px rgba(160, 92, 230, 0.18);
+}
+
+.auth-btn-zeile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 16px;
+}
+.auth-btn-zeile .btn { width: 100%; }
+
+/* =====================================================================
+   FOOTER
+   ===================================================================== */
+#seitenfuss {
+  text-align: center;
+  padding: 28px 16px 38px;
+  color: var(--text-leise);
+  font-size: 0.82rem;
+  line-height: 1.9;
+}
+#seitenfuss a { color: var(--violett); }
+
+/* =====================================================================
+   RESPONSIVE
+   ===================================================================== */
+@media (max-width: 640px) {
+  .nav-innen { justify-content: center; padding: 0 10px; }
+  .nav-marke { display: none; }
+  .nav-tab { padding: 13px 10px 10px; font-size: 0.86rem; }
+  .user-chip { max-width: 150px; margin: 6px 0; }
+
+  .karte { padding: 20px 16px; }
+
+  .gewinn-karte { grid-template-columns: 1fr; }
+  .gewinn-bild-wrap { min-height: 165px; }
+
+  .tab-zeile { gap: 10px; padding: 11px 8px; }
+
+  .match-teams { --wappen: 76px; }
+  .match-aktuell { padding: 20px 14px 22px; }
+  .tipp-zahl { width: 62px; height: 54px; font-size: 1.35rem; }
+  .mm-name { font-size: 0.82rem; }
+}
