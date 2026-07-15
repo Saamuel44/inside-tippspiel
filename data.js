@@ -11,7 +11,7 @@ const KONFIG = {
   // Die Anmeldung läuft jetzt über ein ECHTES Firebase-Passwort (siehe
   // FIREBASE-SETUP.md) – das Passwort selbst steht NIRGENDS im Code,
   // du legst es direkt in der Firebase-Konsole fest.
-  adminName: "Samuel",             // dein Anzeigename
+  adminName: "inside1911",         // dein Anzeigename
   adminPlattform: "name",          // mit welcher Option du dich anmeldest
   adminEmail: "inside1911@gmx.at", // deine Admin-Anmeldung (Firebase Auth)
 
@@ -26,7 +26,7 @@ const KONFIG = {
 
   // Text, der bei gesperrten Spielen (keinTipp: true) über dem Spiel
   // angezeigt wird – z. B. bei Spielen gegen Salzburg.
-  keinTippText: "Bei Spielen gegen Red Bull gibt es kein Tippspiel, der „FC Red Bull Salzburg“ hat keinen Platz in unserem Fussball.",
+  keinTippText: "Bei Spielen gegen Red Bull gibt es kein Tippspiel, der „FC Red Bull Salzburg“ hat keinen Platz in unserem Fussball. Statt Red Bull eine Bühne zu geben, unterstützen wir unsere Frauen-Mannschaft und nehmen ihr Spiel an diesem Wochenende mit ins Tippspiel.",
 };
 
 /* ---------------------------------------------------------------------
@@ -61,6 +61,7 @@ const WAPPEN = {
   "Wiener Sport-Club":  "assets/wappen/WSC.svg",
   "Wiener Sportclub":   "assets/wappen/WSC.svg",
   "WSC":                "assets/wappen/WSC.svg",
+  "Austria Wien Frauen": "assets/wappen/FK Austria Wien.png",
 };
 
 /* ---------------------------------------------------------------------
@@ -94,15 +95,15 @@ const WAPPEN = {
 const SPIELE = [
   // ---- Europacup-Quali & ÖFB-Cup ----
   { id: 101, heim: "Gegner offen",     gast: "Austria Wien",     bewerb: "Conference League", runde: "Quali · Hinspiel",  ort: "noch offen",                  anstoss: "2026-07-23T20:00:00", ergebnis: null }, // Zeit offen
-  { id: 102, heim: "Wiener Sport-Club", gast: "Austria Wien",     bewerb: "ÖFB-Cup",           runde: "1. Runde",          ort: "Wiener Sport-Club-Platz, Wien", anstoss: "2026-07-26T18:00:00", ergebnis: null },
-  { id: 103, heim: "Austria Wien",     gast: "Gegner offen",     bewerb: "Conference League", runde: "Quali · Rückspiel", ort: "Generali-Arena, Wien",        anstoss: "2026-07-30T20:00:00", ergebnis: null }, // Zeit offen
+  { id: 102, heim: "Wiener Sport-Club", gast: "Austria Wien",     bewerb: "ÖFB-Cup",           runde: "1. Runde",          ort: "Wiener Sport-Club-Platz, Wien", anstoss: "2026-07-26T18:00:00", ergebnis: null, tippOffen: true },
+  { id: 103, heim: "Austria Wien",     gast: "Gegner offen",     bewerb: "Conference League", runde: "Quali · Rückspiel", ort: "Generali-Arena, Wien",        anstoss: "2026-07-30T20:00:00", ergebnis: null, tippOffen: true }, // Zeit offen
 
   // ---- Bundesliga Grunddurchgang ----
-  { id: 104, heim: "WAC",              gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 1",  ort: "Auswärts",             anstoss: "2026-08-02T17:00:00", ergebnis: null },
+  { id: 104, heim: "WAC",              gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 1",  ort: "Auswärts",             anstoss: "2026-08-02T17:00:00", ergebnis: null, tippOffen: true },
   { id: 105, heim: "Austria Wien",     gast: "LASK",             bewerb: "Bundesliga", runde: "Runde 2",  ort: "Generali-Arena, Wien", anstoss: "2026-08-09T19:00:00", ergebnis: null },
   { id: 106, heim: "TSV Hartberg",     gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 3",  ort: "Auswärts",             anstoss: "2026-08-16T17:00:00", ergebnis: null },
   { id: 107, heim: "Austria Wien",     gast: "WSG Tirol",        bewerb: "Bundesliga", runde: "Runde 4",  ort: "Generali-Arena, Wien", anstoss: "2026-08-23T17:00:00", ergebnis: null },
-  { id: 108, heim: "Red Bull",         gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 5",  ort: "Auswärts",             anstoss: "2026-08-30T19:00:00", ergebnis: null, keinTipp: true }, // gegen Red Bull kein Tippspiel
+  { id: 108, heim: "Red Bull",         gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 5",  ort: "Auswärts",             anstoss: "2026-08-30T19:00:00", ergebnis: null, keinTipp: true, ersatzId: 1108 }, // gegen Red Bull kein Tippspiel -> Ersatz: Frauen-Spiel
   { id: 109, heim: "Austria Wien",     gast: "Austria Lustenau", bewerb: "Bundesliga", runde: "Runde 6",  ort: "Generali-Arena, Wien", anstoss: "2026-09-11T17:00:00", ergebnis: null }, // Zeit offen
   { id: 110, heim: "GAK",              gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 7",  ort: "Auswärts",             anstoss: "2026-09-18T17:00:00", ergebnis: null }, // Zeit offen
   { id: 111, heim: "Austria Wien",     gast: "Sturm Graz",       bewerb: "Bundesliga", runde: "Runde 8",  ort: "Generali-Arena, Wien", anstoss: "2026-10-10T17:00:00", ergebnis: null }, // Zeit offen
@@ -110,7 +111,7 @@ const SPIELE = [
   { id: 113, heim: "Altach",           gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 10", ort: "Auswärts",             anstoss: "2026-10-23T17:00:00", ergebnis: null }, // Zeit offen
   { id: 114, heim: "Austria Wien",     gast: "Rapid Wien",       bewerb: "Bundesliga", runde: "Runde 11", ort: "Generali-Arena, Wien", anstoss: "2026-10-30T17:00:00", ergebnis: null }, // Zeit offen
   { id: 115, heim: "WSG Tirol",        gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 12", ort: "Auswärts",             anstoss: "2026-11-06T17:00:00", ergebnis: null }, // Zeit offen
-  { id: 116, heim: "Austria Wien",     gast: "Red Bull",         bewerb: "Bundesliga", runde: "Runde 13", ort: "Generali-Arena, Wien", anstoss: "2026-11-21T17:00:00", ergebnis: null, keinTipp: true }, // gegen Red Bull kein Tippspiel, Zeit offen
+  { id: 116, heim: "Austria Wien",     gast: "Red Bull",         bewerb: "Bundesliga", runde: "Runde 13", ort: "Generali-Arena, Wien", anstoss: "2026-11-21T17:00:00", ergebnis: null, keinTipp: true, ersatzId: 1116 }, // gegen Red Bull kein Tippspiel -> Ersatz: Frauen-Spiel
   { id: 117, heim: "Austria Wien",     gast: "WAC",              bewerb: "Bundesliga", runde: "Runde 14", ort: "Generali-Arena, Wien", anstoss: "2026-11-27T17:00:00", ergebnis: null }, // Zeit offen
   { id: 118, heim: "Sturm Graz",       gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 15", ort: "Auswärts",             anstoss: "2026-12-04T17:00:00", ergebnis: null }, // Zeit offen
   { id: 119, heim: "LASK",             gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 16", ort: "Auswärts",             anstoss: "2026-12-11T17:00:00", ergebnis: null }, // Zeit offen
@@ -120,6 +121,12 @@ const SPIELE = [
   { id: 123, heim: "Austria Wien",     gast: "TSV Hartberg",     bewerb: "Bundesliga", runde: "Runde 20", ort: "Generali-Arena, Wien", anstoss: "2027-02-12T17:00:00", ergebnis: null }, // Zeit offen
   { id: 124, heim: "Austria Lustenau", gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 21", ort: "Auswärts",             anstoss: "2027-02-20T17:00:00", ergebnis: null }, // Zeit offen
   { id: 125, heim: "Austria Wien",     gast: "SV Ried",          bewerb: "Bundesliga", runde: "Runde 22", ort: "Generali-Arena, Wien", anstoss: "2027-02-27T17:00:00", ergebnis: null }, // Zeit offen
+
+  // ---- Ersatz-Spiele (Frauen) an Red-Bull-Wochenenden ----
+  // "istErsatz: true" -> werden NICHT einzeln in der Liste gezeigt, sondern
+  // rechts neben dem gesperrten Red-Bull-Spiel (via "ersatzId" oben verknüpft).
+  { id: 1108, heim: "Austria Wien Frauen", gast: "First Vienna FC 1894", bewerb: "Frauen Bundesliga", runde: "5. Runde",  ort: "Generali-Arena, Wien", anstoss: "2026-08-30T14:00:00", ergebnis: null, istErsatz: true },
+  { id: 1116, heim: "First Vienna FC 1894", gast: "Austria Wien Frauen", bewerb: "Frauen Bundesliga", runde: "14. Runde", ort: "Hohe Warte, Wien",      anstoss: "2026-11-22T15:00:00", ergebnis: null, istErsatz: true }, // Zeit offen
 ];
 
 /* ---------------------------------------------------------------------
@@ -177,8 +184,11 @@ const BONUS_FRAGEN = [
     frage: "Welchen Platz belegt die Austria am Ende der Bundesliga-Saison 2026/27?",
     optionen: ["1. Platz", "2. Platz", "3. Platz", "4. Platz", "5. Platz", "6. Platz",
                "7. Platz", "8. Platz", "9. Platz", "10. Platz", "11. Platz", "12. Platz"],
+    frist: "2026-08-02T17:00:00", // tippbar bis zum ersten Bundesligaspiel
   },
   // Weitere Fragen folgen – hier einfach ergänzen.
+  // Optional pro Frage "frist": "JJJJ-MM-TTThh:mm:ss" (Deadline). Ohne
+  // "frist" gilt die Deadline "bis zum ersten Spiel" (wie Torschützenkönig).
 ];
 
 /* ---------------------------------------------------------------------

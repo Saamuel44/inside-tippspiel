@@ -90,7 +90,6 @@
     <section id="panel-tipps" class="panel aktiv">
       <div class="untertabs">
         <button class="untertab aktiv" data-untertab="spiele">Spiele</button>
-        <button class="untertab" data-untertab="torschuetze">Torschützenkönig</button>
         <button class="untertab" data-untertab="bonus">Bonus Tipps</button>
       </div>
 
@@ -98,26 +97,11 @@
         <div id="spieleListe" class="spiele-scroll"></div>
       </div>
 
-      <div id="untertab-torschuetze" class="untertab-panel">
-        <div class="karte torschuetze-karte">
-          <h2>Torschützenkönig</h2>
-          <p class="hinweis-text">Wer erzielt in der Saison 2026/27 die meisten Tore
-             für die Austria (Bundesliga, Cup, Conference League)?
-             Tipp bis zum ersten Spiel möglich.</p>
-          <p id="torschuetzeDeadline" class="deadline-text"></p>
-          <div class="torschuetze-eingabe">
-            <select id="torschuetzeSelect"></select>
-          </div>
-          <p id="torschuetzeStatus" class="status-text"></p>
-        </div>
-      </div>
-
       <div id="untertab-bonus" class="untertab-panel">
         <div class="karte torschuetze-karte">
           <h2>Bonus Tipps</h2>
           <p class="hinweis-text">Pro richtige Antwort gibt es <strong>3 Punkte</strong>.
-             Tippbar bis zum ersten Spiel möglich. Weitere Fragen folgen!</p>
-          <p id="bonusDeadline" class="deadline-text"></p>
+             Weitere Fragen folgen!</p>
           <div id="bonusListe"></div>
         </div>
       </div>
@@ -125,13 +109,10 @@
 
     <!-- ---------- TABELLE ---------- -->
     <section id="panel-tabelle" class="panel">
-      <div class="karte">
+      <div class="karte tabelle-karte">
         <h2>Tabelle</h2>
         <div class="suche-wrap">
           <input type="search" id="tabelleSuche" placeholder="Nach Namen suchen …" autocomplete="off">
-        </div>
-        <div class="tabelle-legende">
-          <span>Tipper</span><span>Punkte</span>
         </div>
         <ol id="tabelleListe" class="tabelle-liste"></ol>
       </div>

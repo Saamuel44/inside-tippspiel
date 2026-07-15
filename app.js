@@ -110,6 +110,10 @@ function nutzerId(plattform, name) {
 function nutzerRef(id) { return doc(db, "nutzer", id); }
 function zustandRef() { return doc(db, "zustand", "oeffentlich"); }
 
+// Feste Dokument-ID deines Admin-Accounts (aus data.js). Wird auch genutzt,
+// um alte Admin-Dokumente (z. B. nach einer Namensänderung) aufzuräumen.
+const ADMIN_DOC_ID = nutzerId(KONFIG.adminPlattform || "name", KONFIG.adminName);
+
 // Tipps liegen in Firestore als Array aus {heim,gast}-Objekten (Firestore
 // mag keine verschachtelten Arrays), intern arbeiten wir weiter mit den
 // gewohnten [heim, gast]-Paaren – diese zwei Funktionen wandeln um.
@@ -149,8 +153,21 @@ async function nutzerLaden(id) {
 function nutzerSpeichern() { /* Kompatibilität: Schreiben läuft jetzt gezielt pro Feld, siehe Aufrufstellen */ }
 
 function aktuellerNutzer() {
-  if (adminEingeloggt) return nutzerListe.find((n) => n.istAdmin) || null;
+  if (adminEingeloggt) {
+    return nutzerListe.find((n) => n.id === ADMIN_DOC_ID)
+        || nutzerListe.find((n) => n.istAdmin) || null;
+  }
   return nutzerListe.find((n) => n.id === sessionId) || null;
+}
+
+// Räumt alte Admin-Dokumente auf (z. B. den früheren "Samuel"-Account nach
+// der Umbenennung). Nur der eingeloggte Admin darf das (Sicherheitsregeln).
+async function alteAdminsAufraeumen() {
+  if (!adminEingeloggt) return;
+  const alte = nutzerListe.filter((n) => n.istAdmin && n.id !== ADMIN_DOC_ID);
+  for (const n of alte) {
+    try { await deleteDoc(nutzerRef(n.id)); } catch (e) { /* nächster Snapshot versucht es erneut */ }
+  }
 }
 
 // Prüft, ob ein PIN noch frei ist (jede Zahlenkombi nur einmal, global).
@@ -166,6 +183,7 @@ function nutzerListeStarten() {
     (snap) => {
       nutzerListe = snap.docs.map((d) => firestoreZuNutzer(d.id, d.data()));
       nutzerBereit = true;
+      alteAdminsAufraeumen();
       pruefeBereitschaft();
       if (aktuellerNutzer()) allesRendern();
     },
@@ -577,9 +595,12 @@ function miniWappenHTML(name) {
             onerror="this.outerHTML='${ersatz.replace(/'/g, "&#39;").replace(/"/g, "&quot;")}'">`;
 }
 
-/* ---------- Aktuelles Spiel: große, cleane Karte ---------- */
-function aktuellesMatchHTML(spiel, nutzer) {
-  const eigene = (nutzer.tipps || {})[spiel.id] || [null, null];
+/* ---------- Große Tipp-Karte (mehrere Spiele können offen sein) ----------
+   id-sicher: Statt fester IDs (#tippSpeichern etc.) werden Klassen mit
+   data-spiel verwendet, damit mehrere Karten gleichzeitig funktionieren. */
+function matchKarteHTML(spiel, opts = {}) {
+  const nutzer = aktuellerNutzer();
+  const eigene = (nutzer && nutzer.tipps ? nutzer.tipps[spiel.id] : null) || [null, null];
   const tippbar = istTippbar(spiel);
 
   const kopf = `
@@ -612,9 +633,16 @@ function aktuellesMatchHTML(spiel, nutzer) {
             <input class="tipp-zahl" type="number" min="0" max="20" inputmode="numeric" data-spiel="${spiel.id}"
                    id="tipp-${spiel.id}-${i}-gast" value="${eigene[i] ? eigene[i][1] : ""}" aria-label="Tipp ${i + 1} Gast">`).join("")}
         </div>
-        <button class="btn btn-primaer tipp-speichern-btn" id="tippSpeichern" data-spiel="${spiel.id}">Speichern</button>
-        <p class="status-text" id="tippStatus"></p>
-        <p class="countdown" id="countdown"></p>
+        <button class="btn btn-primaer tipp-speichern-btn" data-spiel="${spiel.id}">Speichern</button>
+        <p class="status-text tipp-status" data-spiel="${spiel.id}"></p>
+        <p class="countdown tipp-countdown" data-spiel="${spiel.id}" data-anstoss="${spiel.anstoss}"></p>
+      </div>`;
+  } else if (spiel.ergebnis) {
+    const richtig = eigene.some((t) => t && tippRichtig(t, spiel.ergebnis));
+    unten = `
+      <div class="tipp-gesperrt">
+        <p class="tipp-gespeichert">Deine Tipps: <strong>${tippAnzeige(eigene[0])}</strong> · <strong>${tippAnzeige(eigene[1])}</strong></p>
+        <p class="mm-badge ${richtig ? "ja" : "nein"}">${richtig ? "✓ 1 Punkt" : "0 Punkte"}</p>
       </div>`;
   } else {
     unten = `
@@ -625,9 +653,21 @@ function aktuellesMatchHTML(spiel, nutzer) {
   }
 
   return `
-    <article class="match-aktuell" id="aktuellesSpiel" data-spiel="${spiel.id}">
+    <article class="match-aktuell${opts.klein ? " klein" : ""}"${opts.scrollId ? ' id="aktuellesSpiel"' : ""} data-spiel="${spiel.id}">
       ${kopf}${teams}${meta}${unten}
     </article>`;
+}
+
+/* ---------- Red-Bull-Wochenende: gesperrtes Spiel + Frauen-Ersatzspiel ---------- */
+function redBullBlockHTML(spiel, istAktuell, nutzer) {
+  const ersatz = spiel.ersatzId ? SPIELE.find((s) => s.id === spiel.ersatzId) : null;
+  if (!ersatz) return keinTippKarteHTML(spiel, istAktuell);
+  const ersatzMit = { ...ersatz, ergebnis: ERGEBNIS_OVERRIDES[ersatz.id] ?? ersatz.ergebnis };
+  return `
+    <div class="ersatz-paar"${istAktuell ? ' id="aktuellesSpiel"' : ""}>
+      <div class="ep-links">${keinTippKarteHTML(spiel, false)}</div>
+      <div class="ep-rechts">${matchKarteHTML(ersatzMit, { klein: true })}</div>
+    </div>`;
 }
 
 /* ---------- Gesperrtes Spiel (z. B. gegen Red Bull): Schloss + Text ---------- */
@@ -693,36 +733,57 @@ function miniZeileHTML(spiel, status, nutzer) {
     </article>`;
 }
 
+// Spiele für die Liste (ohne Frauen-Ersatzspiele – die werden neben dem
+// gesperrten Red-Bull-Spiel gezeigt).
+function spieleFuerListe() { return alleSpiele().filter((s) => !s.istErsatz); }
+
+// Ist ein Spiel gerade aktiv tippbar (große Karte)? Das offene Spiel und
+// alle mit "tippOffen: true" (früh freigeschaltete) – bis zum Anpfiff.
+function istAktivTippbar(spiel, offen) {
+  if (spiel.keinTipp || !istTippbar(spiel)) return false;
+  return spiel.tippOffen === true || (offen && spiel.id === offen.id);
+}
+
 function spieleRendern() {
   const nutzer = aktuellerNutzer();
   if (!nutzer) return;
-  const spiele = alleSpiele();
+  const spiele = spieleFuerListe();
   const offen = offenesSpiel(spiele);
   const vergangene = spiele.filter((s) => istBeendet(s));
-  const kommende = spiele.filter((s) => !istBeendet(s) && (!offen || s.id !== offen.id));
+  const rest = spiele.filter((s) => !istBeendet(s));
 
   let html = "";
   if (vergangene.length) {
     html += `<div class="mini-label">Bisher</div>`;
     html += vergangene.map((s) => s.keinTipp
-      ? keinTippKarteHTML(s, false)
+      ? redBullBlockHTML(s, false, nutzer)
       : miniZeileHTML(s, "vergangen", nutzer)).join("");
   }
-  if (offen) html += offen.keinTipp ? keinTippKarteHTML(offen, true) : aktuellesMatchHTML(offen, nutzer);
-  if (kommende.length) {
-    html += `<div class="mini-label">Kommende Spiele</div>`;
-    html += kommende.map((s) => s.keinTipp
-      ? keinTippKarteHTML(s, false)
-      : miniZeileHTML(s, "gesperrt", nutzer)).join("");
+
+  let erste = true, kommendeLabel = false;
+  const kommendeLabelEinmal = () => {
+    if (!kommendeLabel) { html += `<div class="mini-label">Kommende Spiele</div>`; kommendeLabel = true; }
+  };
+  for (const s of rest) {
+    const istOffenSlot = offen && s.id === offen.id;
+    if (s.keinTipp) {
+      if (!istOffenSlot) kommendeLabelEinmal();
+      html += redBullBlockHTML(s, istOffenSlot, nutzer);
+    } else if (istAktivTippbar(s, offen)) {
+      html += matchKarteHTML(s, { scrollId: erste });
+      erste = false;
+    } else {
+      kommendeLabelEinmal();
+      html += miniZeileHTML(s, "gesperrt", nutzer);
+    }
   }
 
   $("#spieleListe").innerHTML = html || `<p class="leere-liste">Noch keine Spiele eingetragen.</p>`;
 
-  // Tipp wird per Speichern-Button abgegeben
-  const speichernBtn = $("#tippSpeichern");
-  if (speichernBtn) {
-    speichernBtn.addEventListener("click", () => tippsSichern(Number(speichernBtn.dataset.spiel)));
-  }
+  // Tipp wird per Speichern-Button abgegeben (alle offenen Karten)
+  $$(".tipp-speichern-btn").forEach((btn) => {
+    btn.addEventListener("click", () => tippsSichern(Number(btn.dataset.spiel)));
+  });
 
   countdownAktualisieren();
 }
@@ -745,7 +806,7 @@ async function tippsSichern(spielId) {
   const spiel = alleSpiele().find((s) => s.id === spielId);
   if (!nutzer || !spiel) return;
 
-  const status = $("#tippStatus");
+  const status = $(`.tipp-status[data-spiel="${spielId}"]`);
   if (!istTippbar(spiel)) {
     if (status) status.textContent = "Die Tippabgabe ist bereits geschlossen.";
     spieleRendern();
@@ -783,110 +844,111 @@ async function tippsSichern(spielId) {
   }
 }
 
-/* ---------- Countdown bis zum Anstoß ---------- */
+/* ---------- Countdown bis zum Anstoß (pro offener Karte) ---------- */
 function countdownAktualisieren() {
-  const el = $("#countdown");
-  if (!el) return;
-  const spiele = alleSpiele();
-  const offen = offenesSpiel(spiele);
-  if (!offen || !istTippbar(offen)) { el.textContent = ""; return; }
-
-  let rest = new Date(offen.anstoss).getTime() - Date.now();
-  if (rest <= 0) { spieleRendern(); return; }
-
-  const t = Math.floor(rest / 86400000); rest %= 86400000;
-  const h = Math.floor(rest / 3600000);  rest %= 3600000;
-  const m = Math.floor(rest / 60000);    rest %= 60000;
-  const s = Math.floor(rest / 1000);
-  const teile = [];
-  if (t > 0) teile.push(`${t} T`);
-  teile.push(`${String(h).padStart(2, "0")} Std`, `${String(m).padStart(2, "0")} Min`, `${String(s).padStart(2, "0")} Sek`);
-  el.textContent = `Tippabgabe endet in ${teile.join(" ")}`;
-}
-
-/* =====================================================================
-   RENDER: TORSCHÜTZENKÖNIG
-   ===================================================================== */
-function torschuetzeRendern() {
-  const nutzer = aktuellerNutzer();
-  if (!nutzer) return;
-
-  const select = $("#torschuetzeSelect");
-  select.innerHTML =
-    `<option value="">– Bitte Spieler wählen –</option>` +
-    KADER.map((sp) => `<option value="${escapeHTML(sp.name)}" ${nutzer.torschuetze === sp.name ? "selected" : ""}>
-       Nr. ${sp.nr} · ${escapeHTML(sp.name)}</option>`).join("");
-
-  const offen = torschuetzeOffen();
-  const erster = ersterAnstoss();
-  select.disabled = !offen;
-
-  $("#torschuetzeDeadline").textContent = erster
-    ? (offen ? `Tippbar bis: ${formatAnstoss(erster.toISOString())}`
-             : `Die Tippabgabe ist geschlossen (seit dem 1. Spiel am ${formatAnstoss(erster.toISOString())}).`)
-    : "";
-
-  $("#torschuetzeStatus").textContent = nutzer.torschuetze
-    ? `Dein Tipp: ${nutzer.torschuetze}`
-    : "";
-}
-
-// Auswahl speichert automatisch – kein Knopf nötig
-let torschuetzeStatusTimer = null;
-$("#torschuetzeSelect").addEventListener("change", async () => {
-  const nutzer = aktuellerNutzer();
-  if (!nutzer || !torschuetzeOffen()) { torschuetzeRendern(); return; }
-  const wahl = $("#torschuetzeSelect").value;
-  if (!wahl) return;
-  const status = $("#torschuetzeStatus");
-  status.textContent = "Speichert …";
-  try {
-    await updateDoc(nutzerRef(nutzer.id), { torschuetze: wahl });
-    status.textContent = `Gespeichert ✓ – dein Tipp: ${wahl}`;
-    clearTimeout(torschuetzeStatusTimer);
-    torschuetzeStatusTimer = setTimeout(() => { status.textContent = `Dein Tipp: ${wahl}`; }, 2500);
-  } catch (e) {
-    status.textContent = "Speichern fehlgeschlagen – bitte nochmal versuchen.";
+  const els = $$(".tipp-countdown");
+  if (!els.length) return;
+  let abgelaufen = false;
+  for (const el of els) {
+    let rest = new Date(el.dataset.anstoss).getTime() - Date.now();
+    if (rest <= 0) { abgelaufen = true; continue; }
+    const t = Math.floor(rest / 86400000); rest %= 86400000;
+    const h = Math.floor(rest / 3600000);  rest %= 3600000;
+    const m = Math.floor(rest / 60000);    rest %= 60000;
+    const s = Math.floor(rest / 1000);
+    const teile = [];
+    if (t > 0) teile.push(`${t} T`);
+    teile.push(`${String(h).padStart(2, "0")} Std`, `${String(m).padStart(2, "0")} Min`, `${String(s).padStart(2, "0")} Sek`);
+    el.textContent = `Tippabgabe endet in ${teile.join(" ")}`;
   }
-});
+  if (abgelaufen) spieleRendern(); // ein Spiel hat begonnen -> neu aufbauen
+}
 
 /* =====================================================================
-   RENDER: BONUS-TIPPS (gleiche Deadline wie Torschützenkönig)
+   RENDER: BONUS-TIPPS (inkl. Torschützenkönig, je eigene Deadline)
    ===================================================================== */
+// Ist eine Bonus-Frage noch tippbar? Eigene "frist" pro Frage, sonst
+// bis zum ersten Spiel (wie der Torschützenkönig).
+function bonusFrageOffen(frage) {
+  if (frage.frist) return Date.now() < new Date(frage.frist).getTime();
+  return torschuetzeOffen();
+}
+function fristText(offen, iso) {
+  return offen ? `Tippbar bis: ${formatAnstoss(iso)}`
+               : `Die Tippabgabe ist geschlossen (Deadline war am ${formatAnstoss(iso)}).`;
+}
+
 function bonusRendern() {
   const nutzer = aktuellerNutzer();
   if (!nutzer) return;
   const bonus = nutzer.bonus || {};
-  const offen = torschuetzeOffen();
+
+  // --- Torschützenkönig (Deadline: bis zum ersten Spiel) ---
+  const tskOffen = torschuetzeOffen();
   const erster = ersterAnstoss();
+  const tskBlock = `
+    <div class="bonus-frage" data-tsk="1">
+      <p class="bonus-text">Wer wird Torschützenkönig? Wer erzielt in der Saison 2026/27
+         die meisten Tore für die Austria (Bundesliga, Cup, Conference League)?</p>
+      <p class="deadline-text">${erster ? fristText(tskOffen, erster.toISOString()) : ""}</p>
+      <select class="bonus-select" id="torschuetzeSelect" ${tskOffen ? "" : "disabled"}>
+        <option value="">– Bitte Spieler wählen –</option>
+        ${KADER.map((sp) => `<option value="${escapeHTML(sp.name)}" ${nutzer.torschuetze === sp.name ? "selected" : ""}>Nr. ${sp.nr} · ${escapeHTML(sp.name)}</option>`).join("")}
+      </select>
+      <p class="status-text" id="torschuetzeStatus">${nutzer.torschuetze ? "Dein Tipp: " + escapeHTML(nutzer.torschuetze) : ""}</p>
+    </div>`;
 
-  $("#bonusDeadline").textContent = erster
-    ? (offen ? `Tippbar bis: ${formatAnstoss(erster.toISOString())}`
-             : `Die Tippabgabe ist geschlossen (seit dem 1. Spiel am ${formatAnstoss(erster.toISOString())}).`)
-    : "";
-
-  $("#bonusListe").innerHTML = BONUS_FRAGEN.map((f) => {
+  // --- Bonus-Fragen (je eigene Deadline) ---
+  const fragenBlock = BONUS_FRAGEN.map((f) => {
     const gewaehlt = bonus[f.id] || "";
+    const offen = bonusFrageOffen(f);
     return `
       <div class="bonus-frage">
         <p class="bonus-text">${escapeHTML(f.frage)}</p>
+        <p class="deadline-text">${f.frist ? fristText(offen, f.frist) : ""}</p>
         <select class="bonus-select" data-frage="${escapeHTML(f.id)}" ${offen ? "" : "disabled"}>
           <option value="">– Bitte wählen –</option>
           ${f.optionen.map((o) => `<option value="${escapeHTML(o)}" ${gewaehlt === o ? "selected" : ""}>${escapeHTML(o)}</option>`).join("")}
         </select>
         <p class="status-text bonus-status" data-frage="${escapeHTML(f.id)}">${gewaehlt ? "Dein Tipp: " + escapeHTML(gewaehlt) : ""}</p>
       </div>`;
-  }).join("") || `<p class="leere-liste">Aktuell keine Bonus-Fragen.</p>`;
+  }).join("");
 
-  $$("#bonusListe .bonus-select").forEach((sel) => {
+  $("#bonusListe").innerHTML = tskBlock + fragenBlock;
+
+  // Torschützenkönig speichern
+  const tskSel = $("#torschuetzeSelect");
+  if (tskSel) tskSel.addEventListener("change", () => torschuetzeSpeichern(tskSel.value));
+  // Bonus-Fragen speichern
+  $$("#bonusListe .bonus-select[data-frage]").forEach((sel) => {
     sel.addEventListener("change", () => bonusSpeichern(sel.dataset.frage, sel.value));
   });
+}
+
+let torschuetzeStatusTimer = null;
+async function torschuetzeSpeichern(wahl) {
+  const nutzer = aktuellerNutzer();
+  if (!nutzer || !torschuetzeOffen()) { bonusRendern(); return; }
+  if (!wahl) return;
+  const status = $("#torschuetzeStatus");
+  if (status) status.textContent = "Speichert …";
+  try {
+    await updateDoc(nutzerRef(nutzer.id), { torschuetze: wahl });
+    if (status) {
+      status.textContent = `Gespeichert ✓ – dein Tipp: ${wahl}`;
+      clearTimeout(torschuetzeStatusTimer);
+      torschuetzeStatusTimer = setTimeout(() => { status.textContent = `Dein Tipp: ${wahl}`; }, 2500);
+    }
+  } catch (e) {
+    if (status) status.textContent = "Speichern fehlgeschlagen – bitte nochmal versuchen.";
+  }
 }
 
 const bonusStatusTimer = {};
 async function bonusSpeichern(frageId, wert) {
   const nutzer = aktuellerNutzer();
-  if (!nutzer || !torschuetzeOffen()) { bonusRendern(); return; }
+  const frage = BONUS_FRAGEN.find((f) => f.id === frageId);
+  if (!nutzer || (frage && !bonusFrageOffen(frage))) { bonusRendern(); return; }
   if (!wert) return;
   const status = $(`#bonusListe .bonus-status[data-frage="${frageId}"]`);
   if (status) status.textContent = "Speichert …";
@@ -1185,7 +1247,6 @@ function adminAutoSpeichern(spielId) {
    ===================================================================== */
 function allesRendern() {
   spieleRendern();
-  torschuetzeRendern();
   bonusRendern();
   tabelleRendern();
   gewinneRendern();

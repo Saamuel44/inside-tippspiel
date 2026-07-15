@@ -679,6 +679,30 @@ h2 {
 }
 .match-gesperrt .match-meta { margin-top: 10px; }
 
+/* ---------- Red-Bull-Wochenende: Paar (Sperre links + Frauen-Spiel rechts) ---------- */
+.ersatz-paar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+.ersatz-paar .ep-links,
+.ersatz-paar .ep-rechts { min-width: 0; }
+.ersatz-paar .match-gesperrt,
+.ersatz-paar .match-aktuell { height: 100%; }
+.ersatz-paar .mg-sperre { max-width: none; padding: 12px; }
+.ersatz-paar .mg-text { font-size: 0.8rem; line-height: 1.45; }
+.ersatz-paar .mg-schloss svg { width: 24px; height: 24px; }
+
+/* Kompakte Tipp-Karte (im Paar) */
+.match-aktuell.klein { padding: 16px 12px 18px; border-radius: 20px; }
+.match-aktuell.klein .match-teams { --wappen: 58px; max-width: none; }
+.match-aktuell.klein .mt-name { font-size: 0.8rem; }
+.match-aktuell.klein .tipp-grid { max-width: none; gap: 8px 4px; }
+.match-aktuell.klein .tipp-zahl { width: 46px; height: 44px; font-size: 1.1rem; }
+.match-aktuell.klein .tipp-speichern-btn { max-width: none; }
+.match-aktuell.klein .match-meta { font-size: 0.76rem; }
+
 /* =====================================================================
    TORSCHÜTZENKÖNIG
    ===================================================================== */
@@ -766,16 +790,6 @@ h2 {
   box-shadow: 0 0 0 3px rgba(160, 92, 230, 0.18);
 }
 
-.tabelle-legende {
-  display: flex;
-  justify-content: space-between;
-  padding: 2px 12px 10px;
-  font-size: 0.66rem;
-  color: var(--text-leise);
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-}
-
 .tabelle-liste { list-style: none; }
 
 .tab-zeile {
@@ -783,12 +797,12 @@ h2 {
   grid-template-columns: 30px 20px 1fr auto;
   align-items: center;
   gap: 12px;
-  padding: 11px 12px;
+  padding: 13px 10px;
   border-radius: 14px;
 }
 .tab-zeile:not(:last-child) { border-bottom: var(--linie); }
 
-/* Rang als kleiner Kreis; Top 3 dezent in Gold/Silber/Bronze */
+/* Rang: einfache Zahl; nur Top 3 als Gold/Silber/Bronze-Kreis (cleaner) */
 .tab-rang {
   width: 28px;
   height: 28px;
@@ -797,9 +811,9 @@ h2 {
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 0.82rem;
-  background: rgba(74, 37, 131, 0.08);
-  color: var(--violett-dunkel);
+  font-size: 0.9rem;
+  background: transparent;
+  color: var(--text-leise);
 }
 .tab-zeile.platz-1 .tab-rang { background: #e8c95a; color: #4a3a00; }
 .tab-zeile.platz-2 .tab-rang { background: #d6d3d6; color: #4a4a4a; }
@@ -1235,4 +1249,18 @@ h2 {
   .match-aktuell { padding: 20px 14px 22px; }
   .tipp-zahl { width: 62px; height: 54px; font-size: 1.35rem; }
   .mm-name { font-size: 0.82rem; }
+
+  /* Red-Bull-Paar untereinander statt nebeneinander */
+  .ersatz-paar { grid-template-columns: 1fr; }
+  .match-aktuell.klein .match-teams { --wappen: 72px; }
+  .match-aktuell.klein .tipp-zahl { width: 60px; height: 52px; font-size: 1.3rem; }
+
+  /* Intro-Streifen: auf hohen Handy-Screens weiter in die Ecken rücken,
+     damit die Bahnen rechts oben & links unten die Ecken erreichen. */
+  .streifen-ebene {
+    width: 160vw; height: 205vw;
+    margin-left: -80vw; margin-top: -102.5vw;
+  }
+  .ebene-1 { transform: translate(74vw, -74vw); }
+  .ebene-2 { transform: translate(-74vw, 74vw); }
 }
