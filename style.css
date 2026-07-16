@@ -915,6 +915,20 @@ h2 {
 .gewinn-text h3 { font-family: var(--schrift-marke); color: var(--violett-dunkel); font-size: 1.1rem; margin-bottom: 8px; }
 .gewinn-text p { color: var(--text-leise); line-height: 1.6; font-size: 0.92rem; }
 
+.gewinn-link {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(74, 37, 131, 0.3);
+  color: var(--violett-dunkel);
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.gewinn-link:hover { background: var(--violett-dunkel); color: var(--weiss); }
+
 .sponsor-zeile {
   display: flex;
   align-items: center;
@@ -1024,6 +1038,32 @@ h2 {
 .admin-datum { font-size: 0.76rem; color: var(--text-leise); width: 100%; }
 .admin-status { color: #1d7a36; font-size: 0.88rem; min-width: 90px; }
 .admin-zeile .tipp-zahl { width: 54px; height: 46px; font-size: 1.15rem; }
+
+/* ---------- Admin: Tipps je Spiel ---------- */
+.tipps-einsicht-kopf { margin-bottom: 8px; }
+#adminSpielSelect {
+  width: 100%;
+  font-family: var(--schrift);
+  font-size: 0.95rem;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(74, 37, 131, 0.16);
+  background: var(--weiss);
+  color: var(--tinte);
+}
+.admin-tipp-zeile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: var(--linie);
+  font-size: 0.9rem;
+}
+.admin-tipp-zeile:last-child { border-bottom: none; }
+.admin-tipp-name { font-weight: bold; color: var(--tinte); }
+.admin-tipp-werte { color: var(--text-leise); white-space: nowrap; }
+.admin-tipp-richtig .admin-tipp-werte { color: #1d7a36; font-weight: bold; }
 
 /* ---------- Admin: User-Verwaltung ---------- */
 .user-verwaltung-kopf {

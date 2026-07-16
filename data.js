@@ -97,7 +97,7 @@ const WAPPEN = {
    ------------------------------------------------------------------ */
 const SPIELE = [
   // ---- Europacup-Quali & ÖFB-Cup ----
-  { id: 101, heim: "FK Liepāja",       gast: "Austria Wien",     bewerb: "Conference League", runde: "Quali · Hinspiel",  ort: "Auswärts, Lettland",          anstoss: "2026-07-23T20:00:00", ergebnis: null }, // Zeit offen
+  { id: 101, heim: "FK Liepāja",       gast: "Austria Wien",     bewerb: "Conference League", runde: "Quali · Hinspiel",  ort: "Auswärts, Lettland",          anstoss: "2026-07-23T19:00:00", ergebnis: null },
   { id: 102, heim: "Wiener Sport-Club", gast: "Austria Wien",     bewerb: "ÖFB-Cup",           runde: "1. Runde",          ort: "Wiener Sport-Club-Platz, Wien", anstoss: "2026-07-26T18:00:00", ergebnis: null, tippOffen: true },
   { id: 103, heim: "Austria Wien",     gast: "FK Liepāja",       bewerb: "Conference League", runde: "Quali · Rückspiel", ort: "Generali-Arena, Wien",        anstoss: "2026-07-30T20:00:00", ergebnis: null, tippOffen: true }, // Zeit offen
 
@@ -174,12 +174,14 @@ const KADER = [
 /* ---------------------------------------------------------------------
    BONUS-TIPPS
    ---------------------------------------------------------------------
-   Saison-Fragen. Pro richtige Antwort gibt es 3 Punkte. Tippbar bis zum
-   ersten Spiel (wie der Torschützenkönig). Am Saisonende trägst du die
-   richtige Antwort im Admin-Bereich ein.
+   Saison-Fragen. Pro richtige Antwort gibt es standardmäßig 3 Punkte
+   (mit "punkte" pro Frage änderbar). Tippbar bis zum ersten Spiel (wie
+   der Torschützenkönig). Am Saisonende trägst du die richtige Antwort
+   im Admin-Bereich ein.
 
    Neue Frage? Einfach einen Eintrag ergänzen: eindeutige "id", die
-   "frage" und die Auswahlmöglichkeiten "optionen" (Dropdown).
+   "frage" und die Auswahlmöglichkeiten "optionen" (Dropdown). Optional
+   "punkte" (Standard: 3), falls diese Frage anders bewertet wird.
    ------------------------------------------------------------------ */
 const BONUS_FRAGEN = [
   {
@@ -188,6 +190,7 @@ const BONUS_FRAGEN = [
     optionen: ["1. Platz", "2. Platz", "3. Platz", "4. Platz", "5. Platz", "6. Platz",
                "7. Platz", "8. Platz", "9. Platz", "10. Platz", "11. Platz", "12. Platz"],
     frist: "2026-08-02T17:00:00", // tippbar bis zum ersten Bundesligaspiel
+    punkte: 2,
   },
   // Weitere Fragen folgen – hier einfach ergänzen.
   // Optional pro Frage "frist": "JJJJ-MM-TTThh:mm:ss" (Deadline). Ohne
@@ -205,9 +208,11 @@ const BONUS_FRAGEN = [
 const GEWINNE = [
   {
     platz: 1,
-    titel: "ballesterer Jahresabo",
-    beschreibung: "Details zum Gewinn folgen in Kürze.",
-    bild: "assets/gewinne/platz1.jpg",
+    titel: "Ballesterer Jahresabo",
+    beschreibung: "",
+    bild: "assets/gewinne/1.png",
+    link: "https://ballesterer.at/",
+    linkText: "Ballesterer",
     sponsorName: "",
     sponsorLogo: "assets/sponsoren/sponsor1.png",
     sponsorLink: "",
@@ -215,21 +220,47 @@ const GEWINNE = [
   {
     platz: 2,
     titel: "Austria Wien Heimtrikot 2026/27",
-    beschreibung: "Details zum Gewinn folgen in Kürze.",
-    bild: "assets/gewinne/platz2.jpg",
+    beschreibung: "",
+    bild: "assets/gewinne/2.JPG",
+    link: "https://fanshop.fk-austria.at/collections/trikot",
+    linkText: "Fanshop",
     sponsorName: "",
     sponsorLogo: "assets/sponsoren/sponsor2.png",
     sponsorLink: "",
   },
   {
     platz: 3,
-    titel: "Dritter Platz",
-    beschreibung: "Details zum Gewinn folgen in Kürze.",
-    bild: "assets/gewinne/platz3.jpg",
+    titel: "100€ Steinecker Gutschein",
+    beschreibung: "Offizieller Ausstatter von Austria Wien",
+    bild: "assets/gewinne/3.png",
+    link: "https://www.steinecker.at/fashion/",
+    linkText: "Steinecker",
     sponsorName: "",
     sponsorLogo: "assets/sponsoren/sponsor3.png",
     sponsorLink: "",
   },
+  {
+    platz: 4,
+    titel: "Frauen Bundesliga Ball 2026/27",
+    beschreibung: "unterschrieben von der gesamten Austria-Mannschaft",
+    bild: "assets/gewinne/4.png",
+    link: "",
+    linkText: "",
+    sponsorName: "",
+    sponsorLogo: "",
+    sponsorLink: "",
+  },
+  ...[5, 6, 7, 8, 9, 10].map((platz) => ({
+    platz,
+    titel: "Pickerl Mix",
+    beschreibung: "Im Wert von 10€",
+    bild: "assets/gewinne/5.png",
+    link: "",
+    linkText: "",
+    sponsorName: "",
+    sponsorLogo: "",
+    sponsorLink: "",
+  })),
 ];
 
 /* ---------------------------------------------------------------------

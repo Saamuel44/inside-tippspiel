@@ -279,7 +279,7 @@ function punkteFuerTipps(tipps, torschuetze, bonus) {
   const loesungen = bonusLoesungen();
   for (const frage of BONUS_FRAGEN) {
     const richtig = loesungen[frage.id];
-    if (richtig && bonus && bonus[frage.id] === richtig) punkte += 3;
+    if (richtig && bonus && bonus[frage.id] === richtig) punkte += frage.punkte || 3;
   }
   return punkte;
 }
@@ -1028,16 +1028,20 @@ function gewinneRendern() {
           </span>
         </div>`
       : "";
+    const link = (g.link && g.link.trim())
+      ? `<a class="gewinn-link" href="${escapeHTML(g.link)}" target="_blank" rel="noopener">${escapeHTML(g.linkText || g.link)}</a>`
+      : "";
     return `
     <article class="gewinn-karte platz-${g.platz}">
       <div class="gewinn-bild-wrap">
         <span class="gewinn-band">PLATZ ${g.platz}</span>
-        <span class="gewinn-platzhalter">${g.platz === 1 ? "🏆" : g.platz === 2 ? "🥈" : "🥉"}</span>
+        <span class="gewinn-platzhalter">${g.platz === 1 ? "🏆" : g.platz === 2 ? "🥈" : g.platz === 3 ? "🥉" : "🎁"}</span>
         <img src="${escapeHTML(g.bild)}" alt="${escapeHTML(g.titel)}" onerror="this.remove()">
       </div>
       <div class="gewinn-text">
         <h3>${escapeHTML(g.titel)}</h3>
-        <p>${escapeHTML(g.beschreibung)}</p>
+        ${g.beschreibung ? `<p>${escapeHTML(g.beschreibung)}</p>` : ""}
+        ${link}
         ${sponsor}
       </div>
     </article>`;
@@ -1069,9 +1073,57 @@ function adminRendern() {
   });
 
   adminTorschuetzenkoenigRendern();
+  adminTippsRendern();
   adminBonusRendern();
   userVerwaltungRendern();
 }
+
+/* ---------- Admin: Tipps aller User je Spiel einsehen ---------- */
+function adminTippsRendern() {
+  const select = $("#adminSpielSelect");
+  if (!select) return;
+
+  const spiele = alleSpiele();
+  const vorherAusgewaehlt = select.value;
+  select.innerHTML = spiele.map((s) =>
+    `<option value="${s.id}">${escapeHTML(s.heim)} – ${escapeHTML(s.gast)} · ${formatAnstoss(s.anstoss)}</option>`
+  ).join("") || `<option value="">– keine Spiele –</option>`;
+  if (spiele.some((s) => String(s.id) === vorherAusgewaehlt)) select.value = vorherAusgewaehlt;
+
+  adminTippsListeRendern();
+}
+
+function adminTippsListeRendern() {
+  const container = $("#adminTippsListe");
+  const select = $("#adminSpielSelect");
+  if (!container || !select) return;
+
+  const spielId = Number(select.value);
+  const spiel = alleSpiele().find((s) => s.id === spielId);
+  if (!spiel) {
+    container.innerHTML = `<p class="leere-liste">Kein Spiel ausgewählt.</p>`;
+    return;
+  }
+
+  const user = nutzerListe
+    .filter((n) => !n.istAdmin)
+    .sort((a, b) => a.name.localeCompare(b.name, "de"));
+
+  container.innerHTML = user.map((u) => {
+    const tipps = (u.tipps || {})[spiel.id] || [null, null];
+    const formatTipp = (t) => (t && t[0] !== "" && t[0] != null ? `${t[0]}:${t[1]}` : "–");
+    const richtig = spiel.ergebnis
+      ? tipps.some((t) => t && tippRichtig(t, spiel.ergebnis))
+      : false;
+    return `
+      <div class="admin-tipp-zeile${richtig ? " admin-tipp-richtig" : ""}">
+        <span class="admin-tipp-name">${escapeHTML(u.name)}</span>
+        <span class="admin-tipp-werte">${formatTipp(tipps[0])} &nbsp;/&nbsp; ${formatTipp(tipps[1])}</span>
+      </div>`;
+  }).join("") || `<p class="leere-liste">Noch keine angemeldeten User.</p>`;
+}
+
+$("#adminSpielSelect").addEventListener("change", adminTippsListeRendern);
 
 /* ---------- Admin: tatsächlichen Torschützenkönig festlegen (3P) ---------- */
 function adminTorschuetzenkoenigRendern() {
@@ -1099,7 +1151,7 @@ $("#adminTskSelect").addEventListener("change", async () => {
   adminTskStatusTimer = setTimeout(() => { status.textContent = ""; }, 2800);
 });
 
-/* ---------- Admin: richtige Bonus-Antworten festlegen (je 3P) ---------- */
+/* ---------- Admin: richtige Bonus-Antworten festlegen (Punkte je Frage) ---------- */
 function adminBonusRendern() {
   const container = $("#adminBonusListe");
   if (!container) return;
