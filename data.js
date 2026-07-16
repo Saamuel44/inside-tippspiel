@@ -62,6 +62,9 @@ const WAPPEN = {
   "Wiener Sportclub":   "assets/wappen/WSC.svg",
   "WSC":                "assets/wappen/WSC.svg",
   "Austria Wien Frauen": "assets/wappen/FK Austria Wien.png",
+  "FK Liepāja":         "assets/wappen/FK Liepaja.png",
+  "FK Liepaja":         "assets/wappen/FK Liepaja.png",
+  "First Vienna FC 1894": "assets/wappen/Vienna.png",
 };
 
 /* ---------------------------------------------------------------------
@@ -94,9 +97,9 @@ const WAPPEN = {
    ------------------------------------------------------------------ */
 const SPIELE = [
   // ---- Europacup-Quali & ÖFB-Cup ----
-  { id: 101, heim: "Gegner offen",     gast: "Austria Wien",     bewerb: "Conference League", runde: "Quali · Hinspiel",  ort: "noch offen",                  anstoss: "2026-07-23T20:00:00", ergebnis: null }, // Zeit offen
+  { id: 101, heim: "FK Liepāja",       gast: "Austria Wien",     bewerb: "Conference League", runde: "Quali · Hinspiel",  ort: "Auswärts, Lettland",          anstoss: "2026-07-23T20:00:00", ergebnis: null }, // Zeit offen
   { id: 102, heim: "Wiener Sport-Club", gast: "Austria Wien",     bewerb: "ÖFB-Cup",           runde: "1. Runde",          ort: "Wiener Sport-Club-Platz, Wien", anstoss: "2026-07-26T18:00:00", ergebnis: null, tippOffen: true },
-  { id: 103, heim: "Austria Wien",     gast: "Gegner offen",     bewerb: "Conference League", runde: "Quali · Rückspiel", ort: "Generali-Arena, Wien",        anstoss: "2026-07-30T20:00:00", ergebnis: null, tippOffen: true }, // Zeit offen
+  { id: 103, heim: "Austria Wien",     gast: "FK Liepāja",       bewerb: "Conference League", runde: "Quali · Rückspiel", ort: "Generali-Arena, Wien",        anstoss: "2026-07-30T20:00:00", ergebnis: null, tippOffen: true }, // Zeit offen
 
   // ---- Bundesliga Grunddurchgang ----
   { id: 104, heim: "WAC",              gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 1",  ort: "Auswärts",             anstoss: "2026-08-02T17:00:00", ergebnis: null, tippOffen: true },
