@@ -733,6 +733,49 @@ h2 {
 }
 #torschuetzeSelect:disabled { opacity: 0.55; cursor: not-allowed; }
 
+/* ---------- Bonus-Punkte-Übersicht ---------- */
+.bonus-punkte-uebersicht {
+  display: flex;
+  gap: 14px;
+  margin: 14px 0 6px;
+  flex-wrap: wrap;
+}
+.bonus-punkte-item {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: linear-gradient(150deg, var(--violett) 0%, var(--violett-hell) 100%);
+  color: var(--weiss);
+  font-weight: bold;
+  font-size: 0.88rem;
+}
+.bonus-punkte-zahl {
+  font-size: 1.15rem;
+  background: rgba(255, 255, 255, 0.22);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+/* ---------- August-Challenge ---------- */
+.challenge-karte { text-align: center; }
+.challenge-bild {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  margin: 16px auto;
+  border-radius: var(--radius);
+  box-shadow: var(--schatten);
+}
+.challenge-danke {
+  font-weight: bold;
+  color: var(--violett-dunkel);
+  margin-top: 4px;
+}
+
 /* ---------- Bonus-Fragen ---------- */
 .bonus-frage {
   text-align: center;
