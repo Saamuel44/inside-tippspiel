@@ -852,6 +852,15 @@ h2 {
 
 .tabelle-liste { list-style: none; }
 
+.tabelle-spieler-anzahl {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: var(--linie);
+  text-align: center;
+  color: var(--text-leise);
+  font-size: 0.85rem;
+}
+
 .tab-zeile {
   display: grid;
   grid-template-columns: 30px 20px 1fr auto;

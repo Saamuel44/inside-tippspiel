@@ -996,6 +996,8 @@ function tabelleRendern() {
   const daten = tabellenDaten().filter((e) => !suche || e.name.toLowerCase().includes(suche));
   const ich = aktuellerNutzer();
 
+  $("#tabelleSpielerAnzahl").textContent = nutzerListe.length + " Spieler";
+
   $("#tabelleListe").innerHTML = daten.map((e) => `
     <li class="tab-zeile ${e.platz <= 3 ? "platz-" + e.platz : ""} ${ich && e.id === ich.id ? "ich" : ""}">
       <span class="tab-rang">${e.platz}</span>
