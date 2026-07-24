@@ -89,6 +89,7 @@ let nutzerListe = [];              // alle User-Dokumente (Tabelle, PIN-Check, A
 let ERGEBNIS_OVERRIDES = {};       // { spielId: {heim, gast} }
 let TSK_AKTUELL = null;            // tatsächlicher Torschützenkönig der Saison
 let BONUS_LOESUNGEN_AKTUELL = {};  // { frageId: richtigeAntwort }
+let SPERR_OVERRIDES = {};          // { spielId: true (manuell gesperrt) | false (manuell entsperrt) }
 
 let nutzerBereit = false, zustandBereit = false, introFertig = false;
 let sessionId = localStorage.getItem("ts1911_session") || null; // reguläre User-Session (siehe Hinweis unten)
@@ -200,6 +201,7 @@ function zustandStarten() {
       ERGEBNIS_OVERRIDES = d.ergebnisse || {};
       TSK_AKTUELL = d.torschuetzenkoenig || null;
       BONUS_LOESUNGEN_AKTUELL = d.bonusLoesungen || {};
+      SPERR_OVERRIDES = d.sperren || {};
       zustandBereit = true;
       pruefeBereitschaft();
       if (aktuellerNutzer()) allesRendern();
@@ -239,8 +241,14 @@ function istBeendet(spiel) {
 // es beendet ist, rückt automatisch das nächste Spiel nach.
 function offenesSpiel(spiele) { return spiele.find((s) => !istBeendet(s)) || null; }
 // Gesperrte Spiele (keinTipp, z. B. gegen Red Bull) sind nie tippbar.
+// Der Admin kann jedes Spiel zusätzlich manuell sperren oder entsperren
+// (SPERR_OVERRIDES) – das überstimmt die automatische Anstoß-Deadline.
 function istTippbar(spiel) {
-  return !spiel.keinTipp && Date.now() < new Date(spiel.anstoss).getTime();
+  if (spiel.keinTipp) return false;
+  const override = SPERR_OVERRIDES[spiel.id];
+  if (override === true) return false;
+  if (override === false) return true;
+  return Date.now() < new Date(spiel.anstoss).getTime();
 }
 
 function ersterAnstoss() {
@@ -741,6 +749,7 @@ function spieleFuerListe() { return alleSpiele().filter((s) => !s.istErsatz); }
 // alle mit "tippOffen: true" (früh freigeschaltete) – bis zum Anpfiff.
 function istAktivTippbar(spiel, offen) {
   if (spiel.keinTipp || !istTippbar(spiel)) return false;
+  if (SPERR_OVERRIDES[spiel.id] === false) return true; // vom Admin manuell freigegeben
   return spiel.tippOffen === true || (offen && spiel.id === offen.id);
 }
 
@@ -1053,11 +1062,15 @@ function gewinneRendern() {
 /* =====================================================================
    RENDER: ADMIN
    ===================================================================== */
-function adminRendern() {
-  const nutzer = aktuellerNutzer();
-  if (!nutzer || !nutzer.istAdmin) return;
+// Baut eine Admin-Zeile (Ergebnis-Eingabe + Sperren-Button) für ein Spiel.
+function adminZeileHTML(s) {
+  const offen = istTippbar(s);
+  const sperrBlock = s.keinTipp
+    ? `<span class="admin-sperr-hinweis">Kein Tippspiel</span>`
+    : `<span class="admin-sperr-status ${offen ? "" : "gesperrt"}" id="admin-sperr-status-${s.id}">${offen ? "Offen" : "Gesperrt"}</span>
+       <button class="admin-sperr-btn" id="admin-sperr-btn-${s.id}" data-spiel="${s.id}">${offen ? "Sperren" : "Entsperren"}</button>`;
 
-  $("#adminListe").innerHTML = alleSpiele().map((s) => `
+  return `
     <div class="admin-zeile">
       <span class="admin-spielname">${escapeHTML(s.heim)} – ${escapeHTML(s.gast)}</span>
       <input class="tipp-zahl" type="number" min="0" max="20" data-spiel="${s.id}" id="admin-${s.id}-heim"
@@ -1065,14 +1078,47 @@ function adminRendern() {
       <span class="tipp-doppelpunkt">:</span>
       <input class="tipp-zahl" type="number" min="0" max="20" data-spiel="${s.id}" id="admin-${s.id}-gast"
              value="${s.ergebnis ? s.ergebnis.gast : ""}" aria-label="Tore Gast">
+      <button class="admin-speichern-btn" data-spiel="${s.id}">Speichern</button>
+      ${sperrBlock}
       <span class="admin-status" id="admin-status-${s.id}"></span>
       <span class="admin-datum">${escapeHTML(s.bewerb)} · ${escapeHTML(s.runde)} · ${formatAnstoss(s.anstoss)}</span>
-    </div>`).join("");
+    </div>`;
+}
 
-  // Ergebnisse speichern automatisch beim Eintippen
-  $$("#adminListe .tipp-zahl").forEach((feld) => {
-    feld.addEventListener("input", () => adminAutoSpeichern(Number(feld.dataset.spiel)));
-  });
+let adminListeInitialisiert = false;
+function adminRendern() {
+  const nutzer = aktuellerNutzer();
+  if (!nutzer || !nutzer.istAdmin) return;
+
+  const spiele = alleSpiele();
+
+  if (!adminListeInitialisiert) {
+    $("#adminListe").innerHTML = spiele.map(adminZeileHTML).join("");
+
+    $$("#adminListe .admin-speichern-btn").forEach((btn) => {
+      btn.addEventListener("click", () => adminErgebnisSpeichern(Number(btn.dataset.spiel)));
+    });
+    $$("#adminListe .admin-sperr-btn").forEach((btn) => {
+      btn.addEventListener("click", () => adminSperreUmschalten(Number(btn.dataset.spiel)));
+    });
+    adminListeInitialisiert = true;
+  } else {
+    // Nur bestehende Felder aktualisieren, statt die Liste neu aufzubauen –
+    // sonst gehen gerade eingetippte, noch nicht gespeicherte Ergebnisse
+    // bei jedem Live-Update (z. B. Tipp eines anderen Users) verloren.
+    spiele.forEach((s) => {
+      const heimFeld = $(`#admin-${s.id}-heim`);
+      const gastFeld = $(`#admin-${s.id}-gast`);
+      if (heimFeld && document.activeElement !== heimFeld) heimFeld.value = s.ergebnis ? s.ergebnis.heim : "";
+      if (gastFeld && document.activeElement !== gastFeld) gastFeld.value = s.ergebnis ? s.ergebnis.gast : "";
+
+      const offen = istTippbar(s);
+      const statusEl = $(`#admin-sperr-status-${s.id}`);
+      const btnEl = $(`#admin-sperr-btn-${s.id}`);
+      if (statusEl) { statusEl.textContent = offen ? "Offen" : "Gesperrt"; statusEl.classList.toggle("gesperrt", !offen); }
+      if (btnEl) btnEl.textContent = offen ? "Sperren" : "Entsperren";
+    });
+  }
 
   adminTorschuetzenkoenigRendern();
   adminTippsRendern();
@@ -1268,32 +1314,46 @@ async function pinZuruecksetzen(userId) {
   }
 }
 
-let adminSpeicherTimer = null;
-function adminAutoSpeichern(spielId) {
-  clearTimeout(adminSpeicherTimer);
-  adminSpeicherTimer = setTimeout(async () => {
-    const heim = $(`#admin-${spielId}-heim`).value.trim();
-    const gast = $(`#admin-${spielId}-gast`).value.trim();
-    const status = $(`#admin-status-${spielId}`);
-    const pfad = `ergebnisse.${spielId}`;
+// Ergebnis erst beim Klick auf "Speichern" schreiben (nicht mehr automatisch
+// beim Eintippen) – so gehen laufende Eingaben nie durch ein Live-Update
+// verloren, das während des Tippens hereinkommt.
+async function adminErgebnisSpeichern(spielId) {
+  const heim = $(`#admin-${spielId}-heim`).value.trim();
+  const gast = $(`#admin-${spielId}-gast`).value.trim();
+  const status = $(`#admin-status-${spielId}`);
+  const pfad = `ergebnisse.${spielId}`;
 
-    try {
-      if (heim === "" && gast === "") {
-        await updateDoc(zustandRef(), { [pfad]: deleteField() });
-        status.textContent = "Entfernt ✓";
-      } else if (heim !== "" && gast !== "") {
-        await updateDoc(zustandRef(), { [pfad]: { heim: Number(heim), gast: Number(gast) } });
-        status.textContent = "Gespeichert ✓";
-      } else {
-        status.textContent = "…"; // noch unvollständig
-        return;
-      }
-    } catch (e) {
-      status.textContent = "Speichern fehlgeschlagen.";
-      return;
+  if (heim !== "" && gast === "" || heim === "" && gast !== "") {
+    status.textContent = "Bitte beide Tore eintragen.";
+    return;
+  }
+
+  try {
+    if (heim === "" && gast === "") {
+      await updateDoc(zustandRef(), { [pfad]: deleteField() });
+      status.textContent = "Entfernt ✓";
+    } else {
+      await updateDoc(zustandRef(), { [pfad]: { heim: Number(heim), gast: Number(gast) } });
+      status.textContent = "Gespeichert ✓";
     }
-    setTimeout(() => { if (status.textContent.includes("✓")) status.textContent = ""; }, 2500);
-  }, 800);
+  } catch (e) {
+    status.textContent = "Speichern fehlgeschlagen.";
+    return;
+  }
+  setTimeout(() => { if (status.textContent.includes("✓")) status.textContent = ""; }, 2500);
+}
+
+// Spiel manuell sperren/entsperren (überstimmt die automatische Deadline).
+async function adminSperreUmschalten(spielId) {
+  const spiel = alleSpiele().find((s) => s.id === spielId);
+  if (!spiel) return;
+  const aktuellOffen = istTippbar(spiel);
+  const pfad = `sperren.${spielId}`;
+  try {
+    await updateDoc(zustandRef(), { [pfad]: aktuellOffen });
+  } catch (e) {
+    alert("Fehler beim Sperren/Entsperren: " + e.message);
+  }
 }
 
 /* =====================================================================

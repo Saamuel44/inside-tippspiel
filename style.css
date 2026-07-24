@@ -1108,6 +1108,44 @@ h2 {
 .admin-status { color: #1d7a36; font-size: 0.88rem; min-width: 90px; }
 .admin-zeile .tipp-zahl { width: 54px; height: 46px; font-size: 1.15rem; }
 
+.admin-speichern-btn {
+  font-family: var(--schrift);
+  font-size: 0.82rem;
+  font-weight: bold;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: none;
+  background: var(--violett-dunkel);
+  color: var(--weiss);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.admin-speichern-btn:hover { background: var(--violett); }
+
+.admin-sperr-status {
+  font-size: 0.78rem;
+  font-weight: bold;
+  color: #1d7a36;
+  white-space: nowrap;
+}
+.admin-sperr-status.gesperrt { color: #b3261e; }
+.admin-sperr-hinweis { font-size: 0.78rem; color: var(--text-leise); white-space: nowrap; }
+
+.admin-sperr-btn {
+  font-family: var(--schrift);
+  font-size: 0.82rem;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(74, 37, 131, 0.25);
+  background: transparent;
+  color: var(--violett-dunkel);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.admin-sperr-btn:hover { background: rgba(160, 92, 230, 0.12); }
+
 /* ---------- Admin: Tipps je Spiel ---------- */
 .tipps-einsicht-kopf { margin-bottom: 8px; }
 #adminSpielSelect {
