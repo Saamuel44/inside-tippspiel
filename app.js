@@ -359,7 +359,13 @@ async function adminDokumenteSicherstellen() {
       torschuetze: null, tipps: {}, bonus: {},
     });
   }
-  await setDoc(zustandRef(), { ergebnisse: {}, torschuetzenkoenig: null, bonusLoesungen: {} }, { merge: true });
+  // Nur beim allerersten Mal anlegen – sonst würde jeder erneute Login
+  // (z. B. nach einem Reload) bereits gespeicherte Ergebnisse, den
+  // Torschützenkönig und die Bonus-Lösungen mit leeren Werten überschreiben.
+  const zustandBestehend = await getDoc(zustandRef());
+  if (!zustandBestehend.exists()) {
+    await setDoc(zustandRef(), { ergebnisse: {}, torschuetzenkoenig: null, bonusLoesungen: {}, sperren: {} });
+  }
 }
 
 if (auth) {
