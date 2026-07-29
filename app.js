@@ -1265,6 +1265,14 @@ function userVerwaltungRendern() {
         <button class="btn-reset" data-user="${u.id}">PIN zurücksetzen</button>
         <button class="btn-loeschen" data-user="${u.id}">Löschen</button>
       </div>
+      <div class="user-tsk-zeile">
+        <label>Torschützenkönig-Tipp:</label>
+        <select class="user-tsk-select" data-user="${u.id}">
+          <option value="">– kein Tipp –</option>
+          ${KADER.map((sp) => `<option value="${escapeHTML(sp.name)}" ${u.torschuetze === sp.name ? "selected" : ""}>Nr. ${sp.nr} · ${escapeHTML(sp.name)}</option>`).join("")}
+        </select>
+        <span class="status-text user-tsk-status" data-user="${u.id}"></span>
+      </div>
     </div>`).join("") ||
     `<p class="leere-liste">${gesamt === 0 ? "Noch keine angemeldeten User." : "Niemanden mit diesem Namen gefunden."}</p>`;
 
@@ -1274,6 +1282,24 @@ function userVerwaltungRendern() {
   $$("#userVerwaltung .btn-loeschen").forEach((btn) => {
     btn.addEventListener("click", () => userLoeschen(btn.dataset.user));
   });
+  $$("#userVerwaltung .user-tsk-select").forEach((sel) => {
+    sel.addEventListener("change", () => userTorschuetzeAendern(sel.dataset.user, sel.value));
+  });
+}
+
+// Admin kann den Torschützenkönig-Tipp eines Users korrigieren (z. B. wenn
+// er vergessen wurde oder sich der User vertippt hat).
+async function userTorschuetzeAendern(userId, wert) {
+  const status = $(`.user-tsk-status[data-user="${userId}"]`);
+  if (status) status.textContent = "Speichert …";
+  try {
+    await updateDoc(nutzerRef(userId), { torschuetze: wert || null });
+    if (status) status.textContent = "Gespeichert ✓";
+  } catch (e) {
+    if (status) status.textContent = "Fehlgeschlagen.";
+    return;
+  }
+  setTimeout(() => { if (status && status.textContent.includes("✓")) status.textContent = ""; }, 2500);
 }
 
 // User (z. B. Test-Account) endgültig löschen

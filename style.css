@@ -1092,7 +1092,7 @@ h2 {
 }
 
 /* =====================================================================
-   ADMIN (Ergebnisse speichern automatisch)
+   ADMIN (Ergebnisse + Sperren)
    ===================================================================== */
 .admin-zeile {
   display: flex;
@@ -1202,6 +1202,28 @@ h2 {
   border-bottom: var(--linie);
 }
 .user-zeile:last-child { border-bottom: none; }
+.user-tsk-zeile {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--text-leise);
+}
+.user-tsk-zeile label { white-space: nowrap; }
+.user-tsk-select {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--schrift);
+  font-size: 0.82rem;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(74, 37, 131, 0.16);
+  background: var(--weiss);
+  color: var(--tinte);
+}
+.user-tsk-status { min-width: 70px; white-space: nowrap; }
 .user-zeile .plattform-icon { width: 20px; height: 20px; }
 .user-zeile-name { font-weight: bold; color: var(--tinte); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .user-zeile-name small { display: block; font-weight: normal; font-size: 0.74rem; color: var(--text-leise); }
