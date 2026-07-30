@@ -793,6 +793,20 @@ h2 {
   margin-top: 4px;
 }
 
+.challenge-tabelle-titel {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: var(--linie);
+  font-family: var(--schrift-marke);
+  color: var(--violett-dunkel);
+  font-size: 1rem;
+  text-align: left;
+}
+.mini-tabelle { margin-top: 10px; text-align: left; }
+.tab-zeile.mini { grid-template-columns: 24px 18px 1fr auto; padding: 9px 8px; gap: 8px; }
+.tab-zeile.mini .tab-rang { width: 22px; height: 22px; font-size: 0.78rem; }
+.tab-zeile.mini .tab-punkte { font-size: 1.05rem; }
+
 /* ---------- Bonus-Fragen ---------- */
 .bonus-frage {
   text-align: center;

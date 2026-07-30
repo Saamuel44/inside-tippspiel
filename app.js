@@ -981,6 +981,66 @@ async function bonusSpeichern(frageId, wert) {
 }
 
 /* =====================================================================
+   AUGUST-CHALLENGE: eigene Mini-Wertung nur für Spiele im August
+   ===================================================================== */
+// Alle tippbaren Spiele mit Anstoß im August 2026 (Red-Bull-Spiel zählt
+// nicht, da nicht tippbar – das Ersatz-Frauenspiel zählt stattdessen mit).
+function augustSpiele() {
+  return alleSpiele().filter((s) => {
+    const d = new Date(s.anstoss);
+    return !s.keinTipp && d.getFullYear() === 2026 && d.getMonth() === 7;
+  });
+}
+
+// Nur die 1P-Tipp-Punkte für August-Spiele (ohne Torschützenkönig/Bonus).
+function augustPunkteFuerTipps(tipps) {
+  let punkte = 0;
+  for (const spiel of augustSpiele()) {
+    if (!spiel.ergebnis) continue;
+    const eigene = (tipps || {})[spiel.id];
+    if (!eigene) continue;
+    if (eigene.some((t) => t && tippRichtig(t, spiel.ergebnis))) punkte++;
+  }
+  return punkte;
+}
+
+function augustTabellenDaten() {
+  const echte = nutzerListe
+    .map((n) => ({ name: n.name, plattform: n.plattform, punkte: augustPunkteFuerTipps(n.tipps), id: n.id }));
+
+  const demos = (KONFIG.demoDaten ? DEMO_TIPPER : [])
+    .map((d) => ({ name: d.name, plattform: d.plattform, punkte: augustPunkteFuerTipps(d.tipps), id: null }));
+
+  const alle = [...echte, ...demos].sort(
+    (a, b) => b.punkte - a.punkte || a.name.localeCompare(b.name, "de")
+  );
+
+  let letztePunkte = null, letzterPlatz = 0;
+  alle.forEach((eintrag, i) => {
+    if (eintrag.punkte !== letztePunkte) { letzterPlatz = i + 1; letztePunkte = eintrag.punkte; }
+    eintrag.platz = letzterPlatz;
+  });
+  return alle;
+}
+
+function augustChallengeRendern() {
+  const liste = $("#augustChallengeListe");
+  if (!liste) return;
+  const daten = augustTabellenDaten();
+  const ich = aktuellerNutzer();
+
+  liste.innerHTML = daten.map((e) => `
+    <li class="tab-zeile mini ${e.platz <= 3 ? "platz-" + e.platz : ""} ${ich && e.id === ich.id ? "ich" : ""}">
+      <span class="tab-rang">${e.platz}</span>
+      <span class="plattform-icon" title="${PLATTFORM_NAMEN[e.plattform] || ""}">${ICONS[e.plattform] || ICONS.name}</span>
+      <span class="tab-info">
+        <span class="tab-name">${escapeHTML(e.name)}${ich && e.id === ich.id ? '<span class="tab-du">Du</span>' : ""}</span>
+      </span>
+      <span class="tab-punkte">${e.punkte}<small>P</small></span>
+    </li>`).join("") || `<p class="leere-liste">Noch keine Tipps abgegeben.</p>`;
+}
+
+/* =====================================================================
    RENDER: TABELLE
    ===================================================================== */
 function tabellenDaten() {
@@ -1395,6 +1455,7 @@ function allesRendern() {
   spieleRendern();
   bonusRendern();
   tabelleRendern();
+  augustChallengeRendern();
   gewinneRendern();
   adminRendern();
   zumAktuellenSpielScrollen();
