@@ -101,7 +101,7 @@ const SPIELE = [
   { id: 101, heim: "FK Liepāja",       gast: "Austria Wien",     bewerb: "Conference League", runde: "Quali · Hinspiel",  ort: "Auswärts, Lettland",          anstoss: "2026-07-23T19:00:00", ergebnis: null },
   { id: 102, heim: "Wiener Sport-Club", gast: "Austria Wien",     bewerb: "ÖFB-Cup",           runde: "1. Runde",          ort: "Wiener Sport-Club-Platz, Wien", anstoss: "2026-07-26T18:00:00", ergebnis: null, tippOffen: true },
   { id: 103, heim: "Austria Wien",     gast: "FK Liepāja",       bewerb: "Conference League", runde: "Quali · Rückspiel", ort: "Franz Horr Stadion, Wien",        anstoss: "2026-07-30T20:30:00", ergebnis: null, tippOffen: true },
-  { id: 126, heim: "Beitar Jerusalem", gast: "Austria Wien",     bewerb: "Conference League", runde: "Quali 3 · Hinspiel",  ort: "Auswärts, Israel",         anstoss: "2026-08-06T19:30:00", ergebnis: null },
+  { id: 126, heim: "Beitar Jerusalem", gast: "Austria Wien",     bewerb: "Conference League", runde: "Quali 3 · Hinspiel",  ort: "Auswärts, Rumänien",         anstoss: "2026-08-06T19:30:00", ergebnis: null },
   { id: 127, heim: "Austria Wien",     gast: "Beitar Jerusalem", bewerb: "Conference League", runde: "Quali 3 · Rückspiel", ort: "Franz Horr Stadion, Wien", anstoss: "2026-08-13T20:30:00", ergebnis: null },
 
   // ---- Bundesliga Grunddurchgang ----
