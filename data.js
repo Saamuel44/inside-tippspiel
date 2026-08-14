@@ -67,6 +67,7 @@ const WAPPEN = {
   "First Vienna FC 1894": "assets/wappen/Vienna.png",
   "Beitar Jerusalem":   "assets/wappen/Beitar Jerusalem.png",
   "Traiskirchen":       "assets/wappen/Traiskirchen.png",
+  "Sporting Braga":     "assets/wappen/Braga.webp",
 };
 
 /* ---------------------------------------------------------------------
@@ -105,6 +106,8 @@ const SPIELE = [
   { id: 126, heim: "Beitar Jerusalem", gast: "Austria Wien",     bewerb: "Conference League", runde: "Quali 3 · Hinspiel",  ort: "Auswärts, Rumänien",         anstoss: "2026-08-06T19:30:00", ergebnis: null },
   { id: 127, heim: "Austria Wien",     gast: "Beitar Jerusalem", bewerb: "Conference League", runde: "Quali 3 · Rückspiel", ort: "Franz Horr Stadion, Wien", anstoss: "2026-08-13T20:30:00", ergebnis: null },
   { id: 128, heim: "Traiskirchen",     gast: "Austria Wien",     bewerb: "ÖFB-Cup", runde: "2. Runde", ort: "ARBÖ Arena, Traiskirchen", anstoss: "2026-09-05T17:30:00", ergebnis: null },
+  { id: 129, heim: "Sporting Braga",   gast: "Austria Wien",     bewerb: "Conference League", runde: "Playoff · Hinspiel",  ort: "Auswärts, Portugal",       anstoss: "2026-08-20T21:00:00", ergebnis: null },
+  { id: 130, heim: "Austria Wien",     gast: "Sporting Braga",   bewerb: "Conference League", runde: "Playoff · Rückspiel", ort: "Franz Horr Stadion, Wien", anstoss: "2026-08-27T20:30:00", ergebnis: null },
 
   // ---- Bundesliga Grunddurchgang ----
   { id: 104, heim: "WAC",              gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 1",  ort: "Auswärts",             anstoss: "2026-08-02T17:00:00", ergebnis: null, tippOffen: true },
