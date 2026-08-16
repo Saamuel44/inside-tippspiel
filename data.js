@@ -113,7 +113,7 @@ const SPIELE = [
   { id: 104, heim: "WAC",              gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 1",  ort: "Auswärts",             anstoss: "2026-08-02T17:00:00", ergebnis: null, tippOffen: true },
   { id: 105, heim: "Austria Wien",     gast: "LASK",             bewerb: "Bundesliga", runde: "Runde 2",  ort: "Franz Horr Stadion, Wien", anstoss: "2026-08-09T19:00:00", ergebnis: null },
   { id: 106, heim: "TSV Hartberg",     gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 3",  ort: "Auswärts",             anstoss: "2026-08-16T17:00:00", ergebnis: null },
-  { id: 107, heim: "Austria Wien",     gast: "WSG Tirol",        bewerb: "Bundesliga", runde: "Runde 4",  ort: "Franz Horr Stadion, Wien", anstoss: "2026-08-23T17:00:00", ergebnis: null },
+  { id: 107, heim: "Austria Wien",     gast: "WSG Tirol",        bewerb: "Bundesliga", runde: "Runde 4",  ort: "Franz Horr Stadion, Wien", anstoss: "2026-09-02T18:30:00", ergebnis: null },
   { id: 108, heim: "Red Bull",         gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 5",  ort: "Auswärts",             anstoss: "2026-08-30T19:00:00", ergebnis: null, keinTipp: true, ersatzId: 1108 }, // gegen Red Bull kein Tippspiel -> Ersatz: Frauen-Spiel
   { id: 109, heim: "Austria Wien",     gast: "Austria Lustenau", bewerb: "Bundesliga", runde: "Runde 6",  ort: "Franz Horr Stadion, Wien", anstoss: "2026-09-11T17:00:00", ergebnis: null }, // Zeit offen
   { id: 110, heim: "GAK",              gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 7",  ort: "Auswärts",             anstoss: "2026-09-18T17:00:00", ergebnis: null }, // Zeit offen
