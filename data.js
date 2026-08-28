@@ -136,8 +136,8 @@ const SPIELE = [
   // ---- Ersatz-Spiele (Frauen) an Red-Bull-Wochenenden ----
   // "istErsatz: true" -> werden NICHT einzeln in der Liste gezeigt, sondern
   // rechts neben dem gesperrten Red-Bull-Spiel (via "ersatzId" oben verknüpft).
-  { id: 1108, heim: "Austria Wien Frauen", gast: "First Vienna FC 1894", bewerb: "Frauen Bundesliga", runde: "5. Runde",  ort: "Franz Horr Stadion, Wien", anstoss: "2026-08-30T14:00:00", ergebnis: null, istErsatz: true },
-  { id: 1116, heim: "First Vienna FC 1894", gast: "Austria Wien Frauen", bewerb: "Frauen Bundesliga", runde: "14. Runde", ort: "Hohe Warte, Wien",      anstoss: "2026-11-22T15:00:00", ergebnis: null, istErsatz: true }, // Zeit offen
+  { id: 1108, heim: "First Vienna FC 1894", gast: "Austria Wien Frauen", bewerb: "Frauen Bundesliga", runde: "5. Runde",  ort: "Hohe Warte, Wien",         anstoss: "2026-08-29T17:30:00", ergebnis: null, istErsatz: true },
+  { id: 1116, heim: "Austria Wien Frauen", gast: "First Vienna FC 1894", bewerb: "Frauen Bundesliga", runde: "14. Runde", ort: "Franz Horr Stadion, Wien", anstoss: "2026-11-22T15:00:00", ergebnis: null, istErsatz: true }, // Zeit offen
 ];
 
 /* ---------------------------------------------------------------------
