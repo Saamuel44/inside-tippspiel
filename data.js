@@ -115,17 +115,17 @@ const SPIELE = [
   { id: 106, heim: "TSV Hartberg",     gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 3",  ort: "Auswärts",             anstoss: "2026-08-16T17:00:00", ergebnis: null },
   { id: 107, heim: "Austria Wien",     gast: "WSG Tirol",        bewerb: "Bundesliga", runde: "Runde 4",  ort: "Franz Horr Stadion, Wien", anstoss: "2026-09-02T18:30:00", ergebnis: null },
   { id: 108, heim: "Red Bull",         gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 5",  ort: "Auswärts",             anstoss: "2026-08-30T19:00:00", ergebnis: null, keinTipp: true, ersatzId: 1108 }, // gegen Red Bull kein Tippspiel -> Ersatz: Frauen-Spiel
-  { id: 109, heim: "Austria Wien",     gast: "Austria Lustenau", bewerb: "Bundesliga", runde: "Runde 6",  ort: "Franz Horr Stadion, Wien", anstoss: "2026-09-11T17:00:00", ergebnis: null }, // Zeit offen
-  { id: 110, heim: "GAK",              gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 7",  ort: "Auswärts",             anstoss: "2026-09-18T17:00:00", ergebnis: null }, // Zeit offen
-  { id: 111, heim: "Austria Wien",     gast: "Sturm Graz",       bewerb: "Bundesliga", runde: "Runde 8",  ort: "Franz Horr Stadion, Wien", anstoss: "2026-10-10T17:00:00", ergebnis: null }, // Zeit offen
-  { id: 112, heim: "SV Ried",          gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 9",  ort: "Auswärts",             anstoss: "2026-10-16T17:00:00", ergebnis: null }, // Zeit offen
-  { id: 113, heim: "Altach",           gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 10", ort: "Auswärts",             anstoss: "2026-10-23T17:00:00", ergebnis: null }, // Zeit offen
-  { id: 114, heim: "Austria Wien",     gast: "Rapid Wien",       bewerb: "Bundesliga", runde: "Runde 11", ort: "Franz Horr Stadion, Wien", anstoss: "2026-10-30T17:00:00", ergebnis: null }, // Zeit offen
-  { id: 115, heim: "WSG Tirol",        gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 12", ort: "Auswärts",             anstoss: "2026-11-06T17:00:00", ergebnis: null }, // Zeit offen
-  { id: 116, heim: "Austria Wien",     gast: "Red Bull",         bewerb: "Bundesliga", runde: "Runde 13", ort: "Franz Horr Stadion, Wien", anstoss: "2026-11-21T17:00:00", ergebnis: null, keinTipp: true, ersatzId: 1116 }, // gegen Red Bull kein Tippspiel -> Ersatz: Frauen-Spiel
-  { id: 117, heim: "Austria Wien",     gast: "WAC",              bewerb: "Bundesliga", runde: "Runde 14", ort: "Franz Horr Stadion, Wien", anstoss: "2026-11-27T17:00:00", ergebnis: null }, // Zeit offen
-  { id: 118, heim: "Sturm Graz",       gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 15", ort: "Auswärts",             anstoss: "2026-12-04T17:00:00", ergebnis: null }, // Zeit offen
-  { id: 119, heim: "LASK",             gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 16", ort: "Auswärts",             anstoss: "2026-12-11T17:00:00", ergebnis: null }, // Zeit offen
+  { id: 109, heim: "Austria Wien",     gast: "Austria Lustenau", bewerb: "Bundesliga", runde: "Runde 6",  ort: "Franz Horr Stadion, Wien", anstoss: "2026-09-11T14:30:00", ergebnis: null },
+  { id: 110, heim: "GAK",              gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 7",  ort: "Auswärts",             anstoss: "2026-09-19T19:30:00", ergebnis: null },
+  { id: 111, heim: "Austria Wien",     gast: "Sturm Graz",       bewerb: "Bundesliga", runde: "Runde 8",  ort: "Franz Horr Stadion, Wien", anstoss: "2026-10-10T19:30:00", ergebnis: null },
+  { id: 112, heim: "SV Ried",          gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 9",  ort: "Auswärts",             anstoss: "2026-10-17T19:30:00", ergebnis: null },
+  { id: 113, heim: "Altach",           gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 10", ort: "Auswärts",             anstoss: "2026-10-23T19:30:00", ergebnis: null },
+  { id: 114, heim: "Austria Wien",     gast: "Rapid Wien",       bewerb: "Bundesliga", runde: "Runde 11", ort: "Franz Horr Stadion, Wien", anstoss: "2026-11-01T17:00:00", ergebnis: null },
+  { id: 115, heim: "WSG Tirol",        gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 12", ort: "Auswärts",             anstoss: "2026-11-08T14:30:00", ergebnis: null },
+  { id: 116, heim: "Austria Wien",     gast: "Red Bull",         bewerb: "Bundesliga", runde: "Runde 13", ort: "Franz Horr Stadion, Wien", anstoss: "2026-11-22T17:00:00", ergebnis: null, keinTipp: true, ersatzId: 1116 }, // gegen Red Bull kein Tippspiel -> Ersatz: Frauen-Spiel
+  { id: 117, heim: "Austria Wien",     gast: "WAC",              bewerb: "Bundesliga", runde: "Runde 14", ort: "Franz Horr Stadion, Wien", anstoss: "2026-11-28T17:00:00", ergebnis: null },
+  { id: 118, heim: "Sturm Graz",       gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 15", ort: "Auswärts",             anstoss: "2026-12-06T17:00:00", ergebnis: null },
+  { id: 119, heim: "LASK",             gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 16", ort: "Auswärts",             anstoss: "2026-12-13T17:00:00", ergebnis: null },
   { id: 120, heim: "Austria Wien",     gast: "GAK",              bewerb: "Bundesliga", runde: "Runde 17", ort: "Franz Horr Stadion, Wien", anstoss: "2027-01-22T17:00:00", ergebnis: null }, // Zeit offen
   { id: 121, heim: "Rapid Wien",       gast: "Austria Wien",     bewerb: "Bundesliga", runde: "Runde 18", ort: "Auswärts",             anstoss: "2027-01-29T17:00:00", ergebnis: null }, // Zeit offen
   { id: 122, heim: "Austria Wien",     gast: "Altach",           bewerb: "Bundesliga", runde: "Runde 19", ort: "Franz Horr Stadion, Wien", anstoss: "2027-02-05T17:00:00", ergebnis: null }, // Zeit offen
