@@ -359,14 +359,14 @@ function istBeendet(spiel) {
 // es beendet ist, rückt automatisch das nächste Spiel nach.
 function offenesSpiel(spiele) { return spiele.find((s) => !istBeendet(s)) || null; }
 // Gesperrte Spiele (keinTipp, z. B. gegen Red Bull) sind nie tippbar.
-// Der Admin kann jedes Spiel zusätzlich manuell sperren oder entsperren
-// (SPERR_OVERRIDES) – das überstimmt die automatische Anstoß-Deadline.
+// Nach dem Anstoß ist ein Spiel NIE mehr tippbar – auch nicht per "Entsperren"
+// (sonst könnte man nachträglich auf längst gespielte Spiele tippen, und der
+// Countdown würde endlos neu aufbauen). Vor dem Anstoß kann der Admin ein Spiel
+// manuell sperren (SPERR_OVERRIDES = true) oder früh freigeben (= false).
 function istTippbar(spiel) {
   if (spiel.keinTipp) return false;
-  const override = SPERR_OVERRIDES[spiel.id];
-  if (override === true) return false;
-  if (override === false) return true;
-  return Date.now() < new Date(spiel.anstoss).getTime();
+  if (Date.now() >= new Date(spiel.anstoss).getTime()) return false;
+  return SPERR_OVERRIDES[spiel.id] !== true;
 }
 
 function ersterAnstoss() {
@@ -963,7 +963,7 @@ function spieleRendern() {
     btn.addEventListener("click", () => tippsSichern(Number(btn.dataset.spiel)));
   });
 
-  countdownAktualisieren();
+  countdownAktualisieren(false); // nur Texte füllen – nicht erneut aufbauen (sonst Endlosschleife)
 }
 
 function zumAktuellenSpielScrollen() {
@@ -1023,13 +1023,20 @@ async function tippsSichern(spielId) {
 }
 
 /* ---------- Countdown bis zum Anstoß (pro offener Karte) ---------- */
-function countdownAktualisieren() {
+let letzteAblaufListe = "";
+function countdownAktualisieren(neuAufbauenErlaubt = true) {
   const els = $$(".tipp-countdown");
   if (!els.length) return;
   let abgelaufen = false;
+  const abgelaufeneIds = [];
   for (const el of els) {
     let rest = new Date(el.dataset.anstoss).getTime() - Date.now();
-    if (rest <= 0) { abgelaufen = true; continue; }
+    if (rest <= 0) {
+      abgelaufen = true;
+      abgelaufeneIds.push(el.dataset.spiel);
+      el.textContent = "Die Tippabgabe ist geschlossen.";
+      continue;
+    }
     const t = Math.floor(rest / 86400000); rest %= 86400000;
     const h = Math.floor(rest / 3600000);  rest %= 3600000;
     const m = Math.floor(rest / 60000);    rest %= 60000;
@@ -1039,7 +1046,13 @@ function countdownAktualisieren() {
     teile.push(`${String(h).padStart(2, "0")} Std`, `${String(m).padStart(2, "0")} Min`, `${String(s).padStart(2, "0")} Sek`);
     el.textContent = `Tippabgabe endet in ${teile.join(" ")}`;
   }
-  if (abgelaufen) spieleRendern(); // ein Spiel hat begonnen -> neu aufbauen
+  // Ein Spiel hat begonnen -> Liste neu aufbauen, aber pro Ablauf nur EINMAL
+  // (nicht bei jedem Sekundentakt und nie verschachtelt aus spieleRendern heraus).
+  const ablaufListe = abgelaufeneIds.join(",");
+  if (abgelaufen && neuAufbauenErlaubt && ablaufListe !== letzteAblaufListe) {
+    letzteAblaufListe = ablaufListe;
+    spieleRendern();
+  }
 }
 
 /* =====================================================================
@@ -1334,8 +1347,11 @@ function gewinneRendern() {
 // Baut eine Admin-Zeile (Ergebnis-Eingabe + Sperren-Button) für ein Spiel.
 function adminZeileHTML(s) {
   const offen = istTippbar(s);
+  const angestossen = Date.now() >= new Date(s.anstoss).getTime();
   const sperrBlock = s.keinTipp
     ? `<span class="admin-sperr-hinweis">Kein Tippspiel</span>`
+    : angestossen
+    ? `<span class="admin-sperr-hinweis">Anstoß vorbei</span>`
     : `<span class="admin-sperr-status ${offen ? "" : "gesperrt"}" id="admin-sperr-status-${s.id}">${offen ? "Offen" : "Gesperrt"}</span>
        <button class="admin-sperr-btn" id="admin-sperr-btn-${s.id}" data-spiel="${s.id}">${offen ? "Sperren" : "Entsperren"}</button>`;
 
@@ -1642,6 +1658,10 @@ async function adminErgebnisSpeichern(spielId) {
 async function adminSperreUmschalten(spielId) {
   const spiel = alleSpiele().find((s) => s.id === spielId);
   if (!spiel) return;
+  if (Date.now() >= new Date(spiel.anstoss).getTime()) {
+    alert("Der Anstoß ist schon vorbei – danach kann ein Spiel nicht mehr entsperrt werden.");
+    return;
+  }
   const aktuellOffen = istTippbar(spiel);
   const pfad = `sperren.${spielId}`;
   try {
