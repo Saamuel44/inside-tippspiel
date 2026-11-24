@@ -13,11 +13,11 @@
 /* ---------- Firebase (Modul-Importe, keine Installation nötig) ---------- */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, deleteField,
+  getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, deleteField,
   collection, onSnapshot,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
-  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
+  getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -30,16 +30,34 @@ try {
   firebaseFehlerAnzeigen("Firebase konnte nicht gestartet werden: " + e.message);
 }
 
-function firebaseFehlerAnzeigen(text) {
+// Zeigt den Verbindungs-Hinweis. Mit dem Fehlercode (z. B. "resource-exhausted")
+// erklärt die Seite verständlich, was los ist – statt immer auf die Einrichtung
+// zu verweisen.
+function firebaseFehlerAnzeigen(text, code) {
   console.error(text);
   const el = document.getElementById("authLadenText");
   if (el) {
-    el.innerHTML = `⚠️ Verbindung zur Datenbank fehlgeschlagen.<br><br>
-      Ist <code>firebase-config.js</code> schon mit deinen echten Werten befüllt?
-      Siehe <strong>FIREBASE-SETUP.md</strong>.<br><br><small>${text}</small>`;
+    if (code === "resource-exhausted") {
+      el.innerHTML = `⚠️ Gerade ist sehr viel los – das Tageslimit der Datenbank ist erreicht.<br><br>
+        Bitte versuche es später am Tag noch einmal.<br><br><small>${text}</small>`;
+    } else if (code === "permission-denied") {
+      el.innerHTML = `⚠️ Der Zugriff auf die Datenbank wurde abgelehnt.<br><br>
+        Bitte lade die Seite neu. Besteht das Problem weiter, melde dich bei INSIDE1911.<br><br><small>${text}</small>`;
+    } else {
+      el.innerHTML = `⚠️ Verbindung zur Datenbank fehlgeschlagen.<br><br>
+        Bitte prüfe deine Internetverbindung und lade die Seite neu.<br><br><small>${text}</small>`;
+    }
   }
   document.getElementById("authLaden")?.classList.remove("versteckt");
 }
+
+// Browser-Speicher kann in manchen In-App-Browsern (Instagram, Facebook) oder im
+// privaten Modus Fehler werfen – dann läuft die Seite einfach ohne gespeicherte Sitzung.
+const speicher = {
+  lesen(schluessel) { try { return localStorage.getItem(schluessel); } catch (e) { return null; } },
+  schreiben(schluessel, wert) { try { localStorage.setItem(schluessel, wert); } catch (e) { /* egal */ } },
+  loeschen(schluessel) { try { localStorage.removeItem(schluessel); } catch (e) { /* egal */ } },
+};
 
 /* ---------- Kleine Helfer ---------- */
 const $  = (s) => document.querySelector(s);
@@ -85,14 +103,22 @@ document.querySelectorAll(".plattform-icon[data-icon]").forEach((el) => {
    localStorage – das Anzeigen/Berechnen musste dafür nicht verändert
    werden.
    ===================================================================== */
-let nutzerListe = [];              // alle User-Dokumente (Tabelle, PIN-Check, Admin-Liste)
+// WICHTIG (Lesezugriffe): Beim kostenlosen Firebase-Tarif zählt jedes gelesene
+// Dokument gegen ein Tageslimit. Bei hunderten Usern darf deshalb NICHT jeder
+// Besucher die komplette User-Sammlung laden. Darum gilt:
+//  - normale User laden nur ihr EIGENES Dokument (nutzerListe = [eigenes])
+//  - die Tabelle liest EIN veröffentlichtes Dokument (zustand/tabelle), das der
+//    Admin automatisch aktuell hält
+//  - nur der Admin lädt die komplette Liste (nutzerListe = alle)
+let nutzerListe = [];              // Admin: alle User-Dokumente | normaler User: nur das eigene
 let ERGEBNIS_OVERRIDES = {};       // { spielId: {heim, gast} }
 let TSK_AKTUELL = null;            // tatsächlicher Torschützenkönig der Saison
 let BONUS_LOESUNGEN_AKTUELL = {};  // { frageId: richtigeAntwort }
 let SPERR_OVERRIDES = {};          // { spielId: true (manuell gesperrt) | false (manuell entsperrt) }
+let TABELLE_PUB = null;            // veröffentlichte Tabelle { eintraege: [...], pins: {id: hash} } oder null
 
-let nutzerBereit = false, zustandBereit = false, introFertig = false;
-let sessionId = localStorage.getItem("ts1911_session") || null; // reguläre User-Session (siehe Hinweis unten)
+let nutzerBereit = false, zustandBereit = false, authBereit = false, introFertig = false;
+let sessionId = speicher.lesen("ts1911_session") || null; // reguläre User-Session (siehe Hinweis unten)
 let adminEingeloggt = false; // wird über eine ECHTE Firebase-Anmeldung verifiziert
 
 // Eindeutige, stabile Firestore-Dokument-ID aus Plattform + Name.
@@ -171,25 +197,109 @@ async function alteAdminsAufraeumen() {
   }
 }
 
+function tabelleRef() { return doc(db, "zustand", "tabelle"); }
+
 // Prüft, ob ein PIN noch frei ist (jede Zahlenkombi nur einmal, global).
+// Der Admin prüft gegen die komplette Liste, normale User gegen die vom Admin
+// veröffentlichte PIN-Liste (kann minimal veraltet sein – ist dafür sehr günstig).
 function pinFrei(pin, ausser) {
   const hash = hashPin(pin);
-  return !nutzerListe.some((n) => n.id !== ausser && n.pin === hash);
+  if (adminEingeloggt) return !nutzerListe.some((n) => n.id !== ausser && n.pin === hash);
+  const pins = (TABELLE_PUB && TABELLE_PUB.pins) || {};
+  return !Object.entries(pins).some(([id, h]) => id !== ausser && h === hash);
 }
 
-/* ---------- Live-Listener: User-Liste ---------- */
-function nutzerListeStarten() {
-  onSnapshot(
-    collection(db, "nutzer"),
+// Holt die veröffentlichte Tabelle einmalig (für die PIN-Prüfung bei der Registrierung,
+// wenn der User noch nicht angemeldet ist).
+async function tabellePubEinmalLaden() {
+  if (TABELLE_PUB || adminEingeloggt || !db) return;
+  try {
+    const snap = await getDoc(tabelleRef());
+    if (snap.exists()) TABELLE_PUB = snap.data();
+  } catch (e) { /* ohne PIN-Liste wird nicht auf Doppelte geprüft */ }
+}
+
+/* ---------- Live-Listener: eigenes User-Dokument (normale User) ---------- */
+let eigenerNutzerAbo = null;
+function eigenesDokumentStarten() {
+  if (eigenerNutzerAbo) { eigenerNutzerAbo(); eigenerNutzerAbo = null; }
+  if (!sessionId) { nutzerBereit = true; return; }
+  eigenerNutzerAbo = onSnapshot(
+    nutzerRef(sessionId),
     (snap) => {
-      nutzerListe = snap.docs.map((d) => firestoreZuNutzer(d.id, d.data()));
+      if (adminEingeloggt) return; // Admin nutzt die komplette Liste
+      if (snap.exists()) {
+        nutzerListe = [firestoreZuNutzer(snap.id, snap.data())];
+      } else {
+        // Konto wurde gelöscht oder existiert nicht mehr -> zurück zur Anmeldung
+        const warAngemeldet = !$("#app").classList.contains("versteckt");
+        nutzerListe = [];
+        sessionId = null;
+        speicher.loeschen("ts1911_session");
+        if (warAngemeldet) { location.reload(); return; }
+      }
       nutzerBereit = true;
-      alteAdminsAufraeumen();
       pruefeBereitschaft();
       if (aktuellerNutzer()) allesRendern();
     },
-    (err) => firebaseFehlerAnzeigen("Userliste: " + err.message)
+    (err) => firebaseFehlerAnzeigen("Dein Konto: " + err.message, err.code)
   );
+}
+
+/* ---------- Live-Listener: komplette User-Liste (nur Admin) ---------- */
+let alleNutzerPromise = null;
+function alleNutzerStarten() {
+  if (alleNutzerPromise) return alleNutzerPromise;
+  if (eigenerNutzerAbo) { eigenerNutzerAbo(); eigenerNutzerAbo = null; }
+  alleNutzerPromise = new Promise((resolve) => {
+    let erster = true;
+    const fertig = () => { if (erster) { erster = false; resolve(); } };
+    onSnapshot(
+      collection(db, "nutzer"),
+      (snap) => {
+        nutzerListe = snap.docs.map((d) => firestoreZuNutzer(d.id, d.data()));
+        nutzerBereit = true;
+        alteAdminsAufraeumen();
+        fertig();
+        pruefeBereitschaft();
+        if (aktuellerNutzer()) allesRendern();
+      },
+      (err) => { firebaseFehlerAnzeigen("Userliste: " + err.message, err.code); fertig(); }
+    );
+  });
+  return alleNutzerPromise;
+}
+
+/* ---------- Live-Listener: veröffentlichte Tabelle (normale User) ---------- */
+let tabelleAbo = null;
+function tabelleAbonnieren() {
+  if (tabelleAbo || adminEingeloggt || !db) return;
+  tabelleAbo = onSnapshot(
+    tabelleRef(),
+    (snap) => {
+      TABELLE_PUB = snap.exists() ? snap.data() : null;
+      if (!TABELLE_PUB) tabelleNotfallLaden();
+      if (aktuellerNutzer()) { tabelleRendern(); augustChallengeRendern(); }
+    },
+    (err) => { console.error("Tabelle: " + err.message); tabelleNotfallLaden(); }
+  );
+}
+
+// Notlösung, solange der Admin die Tabelle noch nie veröffentlicht hat (oder das
+// Lesen fehlschlägt): einmalig alle User laden (kein Live-Listener).
+let notfallEintraege = null, notfallLaeuft = false;
+async function tabelleNotfallLaden() {
+  if (notfallEintraege || notfallLaeuft || adminEingeloggt || !db) return;
+  notfallLaeuft = true;
+  try {
+    const snap = await getDocs(collection(db, "nutzer"));
+    notfallEintraege = snap.docs.map((d) => nutzerZuEintrag(firestoreZuNutzer(d.id, d.data())));
+    if (aktuellerNutzer()) { tabelleRendern(); augustChallengeRendern(); }
+  } catch (e) {
+    console.error("Tabelle (Notlösung): " + e.message);
+  } finally {
+    notfallLaeuft = false;
+  }
 }
 
 /* ---------- Live-Listener: gemeinsamer Spielstand ---------- */
@@ -206,22 +316,29 @@ function zustandStarten() {
       pruefeBereitschaft();
       if (aktuellerNutzer()) allesRendern();
     },
-    (err) => firebaseFehlerAnzeigen("Spielstand: " + err.message)
+    (err) => firebaseFehlerAnzeigen("Spielstand: " + err.message, err.code)
   );
 }
 
-nutzerListeStarten();
-zustandStarten();
+if (db) {
+  zustandStarten();
+  eigenesDokumentStarten(); // ohne gespeicherte Sitzung ist nutzerBereit sofort true
+}
+if (!auth) authBereit = true;
 
-// Sicherheitsnetz: Reagiert Firestore (z. B. wegen Platzhalter-Werten in
-// firebase-config.js) gar nicht erst mit einem Fehler, würde die Seite
-// sonst endlos bei "Verbinde …" hängen bleiben. Nach 8 Sekunden ohne
-// Erfolg zeigen wir stattdessen den Hinweis zur Einrichtung.
+// Sicherheitsnetz: Meldet sich die Anmeldung (Firebase Auth) nicht, warten wir
+// höchstens 4 Sekunden und zeigen dann die normale Anmeldung.
+setTimeout(() => {
+  if (!authBereit) { authBereit = true; pruefeBereitschaft(); }
+}, 4000);
+
+// Sicherheitsnetz: Reagiert Firestore gar nicht, würde die Seite endlos bei
+// "Verbinde …" hängen bleiben. Nach 15 Sekunden ohne Erfolg zeigen wir einen Hinweis.
 setTimeout(() => {
   if (!nutzerBereit || !zustandBereit) {
     firebaseFehlerAnzeigen("Zeitüberschreitung – keine Antwort von Firestore.");
   }
-}, 8000);
+}, 15000);
 
 /* ---------- Spiele inkl. Admin-Ergebnissen ---------- */
 function alleSpiele() {
@@ -325,7 +442,7 @@ setTimeout(() => {
 
 function pruefeBereitschaft() {
   if (!introFertig) return;
-  if (!nutzerBereit || !zustandBereit) {
+  if (!authBereit || !nutzerBereit || !zustandBereit) {
     $("#authLaden")?.classList.remove("versteckt");
     return;
   }
@@ -336,7 +453,7 @@ function pruefeBereitschaft() {
 
 $("#heroWeiter").addEventListener("click", () => {
   if (aktuellerNutzer()) $("#hauptnav").scrollIntoView({ behavior: "smooth" });
-  else if (nutzerBereit && zustandBereit) $("#authOverlay").classList.remove("versteckt");
+  else if (authBereit && nutzerBereit && zustandBereit) $("#authOverlay").classList.remove("versteckt");
 });
 
 /* =====================================================================
@@ -373,8 +490,12 @@ if (auth) {
     const passt = user && user.email &&
       user.email.toLowerCase() === (KONFIG.adminEmail || "").toLowerCase();
     adminEingeloggt = !!passt;
+    if (passt) nutzerBereit = false; // der Admin braucht die komplette User-Liste
+    authBereit = true;
+    pruefeBereitschaft();
     if (passt) {
-      try { await adminDokumenteSicherstellen(); } catch (e) { firebaseFehlerAnzeigen("Admin-Setup: " + e.message); }
+      await alleNutzerStarten();
+      try { await adminDokumenteSicherstellen(); } catch (e) { firebaseFehlerAnzeigen("Admin-Setup: " + e.message, e.code); }
       if (introFertig && nutzerBereit && zustandBereit) {
         $("#authOverlay").classList.add("versteckt");
         appAnzeigen(true);
@@ -461,15 +582,17 @@ $("#authStart").addEventListener("click", async () => {
   if (!/^\d{4}$/.test(pin)) return authFehler("Bitte einen 4-stelligen PIN eingeben (nur Ziffern).");
 
   const eigeneId = pinNeuFuer ? pinNeuFuer.id : null;
-  if (!pinFrei(pin, eigeneId))
-    return authFehler("Dieser PIN ist schon vergeben – bitte wähle einen anderen.");
 
   const btn = $("#authStart");
   btn.disabled = true;
   try {
+    await tabellePubEinmalLaden();
+    if (!pinFrei(pin, eigeneId))
+      return authFehler("Dieser PIN ist schon vergeben – bitte wähle einen anderen.");
+
     if (pinNeuFuer) {
       await updateDoc(nutzerRef(pinNeuFuer.id), { pin: hashPin(pin) });
-      einloggen(pinNeuFuer.id);
+      await einloggen(pinNeuFuer.id);
     } else {
       const name = $("#authName").value.trim();
       const id = nutzerId(gewaehltePlattform, name);
@@ -477,10 +600,10 @@ $("#authStart").addEventListener("click", async () => {
         name, plattform: gewaehltePlattform, pin: hashPin(pin),
         istAdmin: false, torschuetze: null, tipps: {}, bonus: {},
       });
-      einloggen(id);
+      await einloggen(id);
     }
   } catch (e) {
-    authFehler("Speichern fehlgeschlagen – bitte versuch es nochmal.");
+    authFehler("Speichern fehlgeschlagen – bitte versuch es nochmal." + (e && e.code ? " (" + e.code + ")" : ""));
   } finally {
     btn.disabled = false;
   }
@@ -488,12 +611,28 @@ $("#authStart").addEventListener("click", async () => {
 
 $("#authZurueckNeu").addEventListener("click", () => { pinNeuFuer = null; authSchrittZeigen(1); });
 
-$("#authPinOk").addEventListener("click", () => {
+$("#authPinOk").addEventListener("click", async () => {
   const pin = $("#authPinAbfrage").value.trim();
   if (!wartenderNutzer) return authSchrittZeigen(1);
   if (hashPin(pin) !== wartenderNutzer.pin) return authFehler("Falscher PIN – bitte versuch es nochmal.");
-  einloggen(wartenderNutzer.id);
+  try {
+    await einloggen(wartenderNutzer.id);
+  } catch (e) {
+    authFehler("Anmeldung fehlgeschlagen – bitte versuch es nochmal." + (e && e.code ? " (" + e.code + ")" : ""));
+  }
 });
+
+// Verständliche Fehlermeldung statt immer "Falsches Passwort oder Verbindungsfehler".
+function adminLoginFehlerText(e) {
+  const code = (e && e.code) || "";
+  if (["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found", "auth/invalid-login-credentials"].includes(code))
+    return "Falsches Passwort. Mit „Passwort vergessen?“ bekommst du einen Link per E-Mail.";
+  if (code === "auth/too-many-requests")
+    return "Zu viele Versuche – bitte warte ein paar Minuten oder setze das Passwort zurück.";
+  if (code === "auth/network-request-failed")
+    return "Keine Verbindung zu Firebase – bitte Internet prüfen und nochmal versuchen.";
+  return "Anmeldung fehlgeschlagen (" + (code || (e && e.message) || "unbekannt") + ").";
+}
 
 $("#authAdminOk").addEventListener("click", async () => {
   const pw = $("#authAdminPasswort").value;
@@ -504,9 +643,20 @@ $("#authAdminOk").addEventListener("click", async () => {
     await signInWithEmailAndPassword(auth, KONFIG.adminEmail, pw);
     // onAuthStateChanged (oben) übernimmt den Rest der Anmeldung
   } catch (e) {
-    authFehler("Falsches Passwort oder Verbindungsfehler.");
+    authFehler(adminLoginFehlerText(e));
   } finally {
     btn.disabled = false;
+  }
+});
+
+$("#authAdminReset").addEventListener("click", async () => {
+  if (!auth) return;
+  try {
+    await sendPasswordResetEmail(auth, KONFIG.adminEmail);
+    authFehler("");
+    alert("Eine E-Mail zum Zurücksetzen des Passworts wurde an das Admin-Postfach geschickt.");
+  } catch (e) {
+    authFehler("E-Mail konnte nicht gesendet werden (" + ((e && e.code) || "unbekannt") + ").");
   }
 });
 
@@ -517,9 +667,16 @@ $("#authAdminPasswort").addEventListener("keydown", (e) => { if (e.key === "Ente
 $("#authZurueck").addEventListener("click", () => { wartenderNutzer = null; authSchrittZeigen(1); });
 $("#authZurueckAdmin").addEventListener("click", () => authSchrittZeigen(1));
 
-function einloggen(id) {
+async function einloggen(id) {
+  // Eigenes Dokument einmal laden, damit die App sofort startet; danach hält der
+  // Live-Listener es aktuell.
+  const nutzer = await nutzerLaden(id);
+  if (!nutzer) throw new Error("Konto nicht gefunden");
   sessionId = id;
-  localStorage.setItem("ts1911_session", id);
+  speicher.schreiben("ts1911_session", id);
+  nutzerListe = [nutzer];
+  nutzerBereit = true;
+  eigenesDokumentStarten();
   $("#authOverlay").classList.add("versteckt");
   appAnzeigen(true);
 }
@@ -528,7 +685,7 @@ $("#userChip").addEventListener("click", async () => {
   if (!confirm("Möchtest du dich abmelden?")) return;
   if (adminEingeloggt && auth) { try { await signOut(auth); } catch (e) { /* egal, wir laden eh neu */ } }
   sessionId = null;
-  localStorage.removeItem("ts1911_session");
+  speicher.loeschen("ts1911_session");
   location.reload();
 });
 
@@ -539,10 +696,12 @@ function appAnzeigen(hinscrollen) {
   const nutzer = aktuellerNutzer();
   if (!nutzer) return;
 
+  $("#authOverlay").classList.add("versteckt");
   $("#hauptnav").classList.remove("versteckt");
   $("#app").classList.remove("versteckt");
   $("#seitenfuss").classList.remove("versteckt");
   $(".nav-tab-admin").classList.toggle("versteckt", !nutzer.istAdmin);
+  tabelleAbonnieren();
 
   $("#userChipIcon").innerHTML = ICONS[nutzer.plattform] || ICONS.name;
   $("#userChipName").textContent = nutzer.name;
@@ -1004,16 +1163,49 @@ function augustPunkteFuerTipps(tipps) {
   return punkte;
 }
 
-function augustTabellenDaten() {
-  const echte = nutzerListe
-    .map((n) => ({ name: n.name, plattform: n.plattform, punkte: augustPunkteFuerTipps(n.tipps), id: n.id }));
+// Ein Tabellen-Eintrag eines Users (Gesamtpunkte + August-Punkte). Der Admin
+// veröffentlicht diese Einträge als EIN Dokument, damit normale User nicht
+// alle User-Dokumente einzeln lesen müssen.
+function nutzerZuEintrag(n) {
+  return {
+    id: n.id,
+    name: n.name,
+    plattform: n.plattform,
+    torschuetze: n.torschuetze || null,
+    punkte: punkteFuerTipps(n.tipps, n.torschuetze, n.bonus),
+    august: augustPunkteFuerTipps(n.tipps),
+  };
+}
 
-  const demos = (KONFIG.demoDaten ? DEMO_TIPPER : [])
-    .map((d) => ({ name: d.name, plattform: d.plattform, punkte: augustPunkteFuerTipps(d.tipps), id: null }));
+// Alle Tabellen-Einträge aus der besten verfügbaren Quelle:
+//  - Admin: berechnet aus der kompletten User-Liste
+//  - normaler User: veröffentlichte Tabelle, der eigene Eintrag immer live
+function tabellenEintraege() {
+  if (adminEingeloggt) return nutzerListe.map(nutzerZuEintrag);
 
-  const alle = [...echte, ...demos].sort(
-    (a, b) => b.punkte - a.punkte || a.name.localeCompare(b.name, "de")
-  );
+  const quelle = (TABELLE_PUB && TABELLE_PUB.eintraege) || notfallEintraege || [];
+  const basis = quelle.map((e) => ({ ...e }));
+  const ich = aktuellerNutzer();
+  if (ich) {
+    const eigen = nutzerZuEintrag(ich);
+    const i = basis.findIndex((e) => e.id === ich.id);
+    if (i >= 0) basis[i] = eigen; else basis.push(eigen);
+  }
+  return basis;
+}
+
+// Sortiert nach dem gewünschten Punktefeld ("punkte" oder "august"); gleiche
+// Punkte = gleicher Platz. Rückgabe: Einträge mit `punkte` (= gewähltes Feld) und `platz`.
+function eintraegeRangieren(feld) {
+  const demos = (KONFIG.demoDaten ? DEMO_TIPPER : []).map((d) => ({
+    id: null, name: d.name, plattform: d.plattform, torschuetze: d.torschuetze || null,
+    punkte: punkteFuerTipps(d.tipps, d.torschuetze, d.bonus),
+    august: augustPunkteFuerTipps(d.tipps),
+  }));
+
+  const alle = [...tabellenEintraege(), ...demos]
+    .map((e) => ({ id: e.id, name: e.name, plattform: e.plattform, torschuetze: e.torschuetze, punkte: e[feld] || 0 }))
+    .sort((a, b) => b.punkte - a.punkte || a.name.localeCompare(b.name, "de"));
 
   let letztePunkte = null, letzterPlatz = 0;
   alle.forEach((eintrag, i) => {
@@ -1021,6 +1213,31 @@ function augustTabellenDaten() {
     eintrag.platz = letzterPlatz;
   });
   return alle;
+}
+
+function augustTabellenDaten() { return eintraegeRangieren("august"); }
+
+// Admin: hält die veröffentlichte Tabelle automatisch aktuell. Geschrieben wird nur,
+// wenn sich der Inhalt wirklich geändert hat (z. B. neue Ergebnisse oder neue User) –
+// normale Tipp-Änderungen verändern die Punkte nicht und lösen daher keinen Schreibzugriff aus.
+let tabelleVeroeffentlichenTimer = null, letzteVeroeffentlichung = null;
+function tabelleVeroeffentlichenPlanen() {
+  if (!adminEingeloggt || !nutzerListe.length) return;
+  clearTimeout(tabelleVeroeffentlichenTimer);
+  tabelleVeroeffentlichenTimer = setTimeout(async () => {
+    const sortiert = [...nutzerListe].sort((a, b) => (a.id < b.id ? -1 : 1));
+    const eintraege = sortiert.map(nutzerZuEintrag);
+    const pins = {};
+    sortiert.forEach((n) => { if (n.pin) pins[n.id] = n.pin; });
+    const json = JSON.stringify({ eintraege, pins });
+    if (json === letzteVeroeffentlichung) return;
+    try {
+      await setDoc(tabelleRef(), { eintraege, pins });
+      letzteVeroeffentlichung = json;
+    } catch (e) {
+      console.error("Tabelle veröffentlichen fehlgeschlagen: " + e.message);
+    }
+  }, 4000);
 }
 
 function augustChallengeRendern() {
@@ -1045,25 +1262,7 @@ function augustChallengeRendern() {
    ===================================================================== */
 function tabellenDaten() {
   // Alle echten Nutzer inkl. Admin (Samuel spielt selbst mit)
-  const echte = nutzerListe
-    .map((n) => ({ name: n.name, plattform: n.plattform, torschuetze: n.torschuetze,
-                   punkte: punkteFuerTipps(n.tipps, n.torschuetze, n.bonus), id: n.id }));
-
-  const demos = (KONFIG.demoDaten ? DEMO_TIPPER : [])
-    .map((d) => ({ name: d.name, plattform: d.plattform, torschuetze: d.torschuetze,
-                   punkte: punkteFuerTipps(d.tipps, d.torschuetze, d.bonus), id: null }));
-
-  const alle = [...echte, ...demos].sort(
-    (a, b) => b.punkte - a.punkte || a.name.localeCompare(b.name, "de")
-  );
-
-  // Gleiche Punkte = gleicher Platz
-  let letztePunkte = null, letzterPlatz = 0;
-  alle.forEach((eintrag, i) => {
-    if (eintrag.punkte !== letztePunkte) { letzterPlatz = i + 1; letztePunkte = eintrag.punkte; }
-    eintrag.platz = letzterPlatz;
-  });
-  return alle;
+  return eintraegeRangieren("punkte");
 }
 
 function tabelleRendern() {
@@ -1071,7 +1270,7 @@ function tabelleRendern() {
   const daten = tabellenDaten().filter((e) => !suche || e.name.toLowerCase().includes(suche));
   const ich = aktuellerNutzer();
 
-  $("#tabelleSpielerAnzahl").textContent = nutzerListe.length + " Spieler";
+  $("#tabelleSpielerAnzahl").textContent = tabellenEintraege().length + " Spieler";
 
   $("#tabelleListe").innerHTML = daten.map((e) => `
     <li class="tab-zeile ${e.platz <= 3 ? "platz-" + e.platz : ""} ${ich && e.id === ich.id ? "ich" : ""}">
@@ -1458,6 +1657,7 @@ function allesRendern() {
   augustChallengeRendern();
   gewinneRendern();
   adminRendern();
+  tabelleVeroeffentlichenPlanen();
   zumAktuellenSpielScrollen();
 }
 
