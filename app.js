@@ -118,6 +118,7 @@ let SPERR_OVERRIDES = {};          // { spielId: true (manuell gesperrt) | false
 let TABELLE_PUB = null;            // veröffentlichte Tabelle { eintraege: [...], pins: {id: hash} } oder null
 
 let nutzerBereit = false, zustandBereit = false, authBereit = false, introFertig = false;
+let appSchonGezeigt = false; // damit nur beim ersten Anzeigen zur App gescrollt wird, nicht bei jedem Live-Update
 let sessionId = speicher.lesen("ts1911_session") || null; // reguläre User-Session (siehe Hinweis unten)
 let adminEingeloggt = false; // wird über eine ECHTE Firebase-Anmeldung verifiziert
 
@@ -447,7 +448,9 @@ function pruefeBereitschaft() {
     return;
   }
   $("#authLaden")?.classList.add("versteckt");
-  if (aktuellerNutzer()) appAnzeigen(false);
+  // Wer schon angemeldet ist (gespeicherte Sitzung), sieht nach der Intro-Animation
+  // direkt die App – sonst bliebe nur das Logo mit dem Pfeil sichtbar.
+  if (aktuellerNutzer()) appAnzeigen(!appSchonGezeigt);
   else if ($("#app").classList.contains("versteckt")) $("#authOverlay").classList.remove("versteckt");
 }
 
@@ -696,6 +699,7 @@ function appAnzeigen(hinscrollen) {
   const nutzer = aktuellerNutzer();
   if (!nutzer) return;
 
+  appSchonGezeigt = true;
   $("#authOverlay").classList.add("versteckt");
   $("#hauptnav").classList.remove("versteckt");
   $("#app").classList.remove("versteckt");
